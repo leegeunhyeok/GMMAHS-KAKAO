@@ -162,9 +162,11 @@ router.route('/message').post((req, res) => {
 http.createServer(app).listen(8080, () => {
   console.log('Gmmahs KAKAO server start.');
   db.init();
-  weather.set();
   schedule.scheduleJob('1 0 0 * * * *', () => {
-    meal.set(); // 매일 00:00:01 급식데이터, 날씨데이터 갱신
-    weather.set();
+    meal.set(); // 매일 00:00:01 급식데이터 갱신
   });
+
+  schedule.scheduleJob('0 0 * * * * *', () => {
+    weather.set(); // 매 시간마다 급식 데이터 갱신 
+  })
 });
