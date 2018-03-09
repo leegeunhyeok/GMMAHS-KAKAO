@@ -1,6 +1,6 @@
 const $main = {
   'type': 'buttons',
-  'buttons': ['급식', '날씨', '버스', '정보']
+  'buttons': ['급식', '날씨', '버스', '정보', '개발자']
 };
 
 var http = require('http'), 
@@ -8,7 +8,12 @@ var http = require('http'),
   bodyParser = require('body-parser'), // HTML Body 데이터 읽기(POST)
   cheerio = require('cheerio'); // HTML 파싱
 
+var schedule = require('node-schedule'), // 스케줄러 
+  rule = new schedule.RecurrenceRule();
+
+var db = require('./database.js');
 var meal = require('./meal.js'); // 급식 정보 파싱
+var weather = require('./weather.js');
 
 var app = express();
 var router = express.Router();
@@ -29,50 +34,54 @@ router.route('/message').post((req, res) => {
 
   switch($content) { // 텍스트에 따라 적절한 응답하기 
     case '처음으로': {
-      send = {
+      res.json({
         'message': {
           'text': '다양한 기능을 이용해보세요!'
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons': ['급식', '날씨', '버스', '정보']
+          'buttons': ['급식', '날씨', '버스', '정보', '개발자']
         }
-      }
+      });
       break;
     }
 
     case '급식': {
-      send = {
-        'message': {
-          'text': meal.get(),
-          'message_button': {
-            'label': '이번달 급식 확인하기',
-            'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
+      meal.get(data => {
+        res.json({
+          'message': {
+            'text': data,
+            'message_button': {
+              'label': '이번달 급식 확인하기',
+              'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
+            },
           },
-        },
-        'keyboard': {
-          'type': 'buttons',
-          'buttons': ['처음으로']
-        }
-      };
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': ['처음으로']
+          }
+        });
+      });
       break;  
     }
 
     case '날씨': {
-      send = {
-        'message': {
-          'text': `현재 구현 중인 기능입니다. ${new Date()}`
-        },
-        'keyboard': {
-          'type': 'buttons',
-          'buttons': ['처음으로']
-        }
-      };
+      weather.get(data => {
+        res.json({
+          'message': {
+            'text': data
+          },
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': ['처음으로']
+          }
+        });
+      });
       break;  
     }
 
     case '버스': {
-      send = {
+      res.json({
         'message': {
           'text': '현재 구현 중인 기능입니다.'
         },
@@ -80,33 +89,62 @@ router.route('/message').post((req, res) => {
           'type': 'buttons',
           'buttons': ['처음으로']
         }
-      };
+      });
       break;
     }
 
     case '정보': {
-      send = {
+      res.json({
         'message': {
-          'text': '광명경영회계고등학교 정보제공 서비스입니다.\n\n' +
-          '다양한 기능 및 오류 신고는\n[이메일] lghlove0509@naver.com\n' +
-          '[전화번호] 010-4096-4475로 문의해주시면 감사하겠습니다.\n\n' +
-          '본 서비스는 오픈소스로 Github에 모두 공개되어있으며 MIT 라이센스를 적용하고 있습니다.\n\n' +
-          '개발자: 이근혁(3-8)',
+          'text': '광명경영회계고등학교 정보제공\n서비스입니다.\n\n' +
+          '기능 및 오류 신고는\n아래에 문의해주시길 바랍니다.\n\n> lghlove0509@naver.com\n\n' +
+          '> 010-4096-4475\n\n' +
+          '본 서비스는 오픈소스로 Github에 모두 공개되어있으며 MIT 라이센스를 적용하고 있습니다.\n\n' + 
+          'Server: Node.js\nDB: MariaDB',
           'message_button': {
             'label': '소스코드',
-            'url': 'https://github.com/leegeunhyeok'
+            'url': 'https://github.com/leegeunhyeok/GMMAHS-KAKAO'
           },
         },
         'keyboard': {
           'type': 'buttons',
           'buttons': ['처음으로']
         }
-      };
+      });
+      break;  
+    }
+
+    case '개발자': {
+      res.json({
+        'message': {
+          'text': '[개발자 정보]\n\n' +
+          '개발자: 이근혁(3-8)\n이메일: lghlove0509@naver.com\n깃허브: Leegeunhyeok'
+        },
+        'keyboard': {
+          'type': 'buttons',
+          'buttons': ['블로그', '처음으로']
+        }
+      });
+      break;  
+    }
+
+    case '블로그': {
+      res.json({
+        'message': {
+          'text': '[개발자 블로그]\n\n개발자의 개인 블로그입니다!\n다양한 글과 작품이 올라와있습니다~!\n\n' +
+          '다음 티스토리\nhttp://codevkr.tistory.com\n\n\n네이버\nhttp://blog.naver.com/lghlove0509\n\n\n' + 
+          '개인 포트폴리오 웹사이트\nhttps://leegeunhyeok.github.io'
+        },
+        'keyboard': {
+          'type': 'buttons',
+          'buttons': ['처음으로']
+        }
+      });
       break;  
     }
 
     default: {
-      send = {
+      res.json({
         'message': {
           'text': '알 수 없는 명령입니다.'
         },
@@ -114,14 +152,19 @@ router.route('/message').post((req, res) => {
           'type': 'buttons',
           'buttons': ['처음으로']
         }
-      };
+      });
       break;
     }
   }
-  res.json(send); // 지정된 json 데이터를 사용자에게 응답 
 });
 
 // Express 서버 시작, 포트 지정 
 http.createServer(app).listen(8080, () => {
   console.log('Gmmahs KAKAO server start.');
+  db.init();
+  weather.set();
+  schedule.scheduleJob('1 0 0 * * * *', () => {
+    meal.set(); // 매일 00:00:01 급식데이터, 날씨데이터 갱신
+    weather.set();
+  });
 });
