@@ -45,15 +45,14 @@ var getMeal = callback => {
   db.query('SELECT * FROM meal', (err, rows) => {
     if(err) {
       console.log(err);
-      callback('서버에 문제가 발생하였습니다.');
+      callback('서버에 문제가 발생하였습니다.', false);
     }
 
     if(rows.length) {
       let info = rows[0].info ? rows[0].info : '급식이 없습니다.';
-      callback(rows[0].date + '\n\n' + info);
+      callback(rows[0].date + '\n\n' + info, false);
     } else {
-      setMeal(); // 데이터가 없으면 데이터 불러오기
-      callback('새로운 데이터를 불러오고있습니다.\n잠시 후 다시 시도해주세요');
+      callback('새로운 데이터를 불러오고있습니다.\n잠시 후 다시 시도해주세요', true);
     }
   });
 }
@@ -86,12 +85,11 @@ var getWeather = callback => {
   db.query('SELECT * FROM weather', (err, rows) => {
     if(err) {
       console.log(err);
-      callback('서버에 문제가 발생하였습니다.');
+      callback('서버에 문제가 발생하였습니다.', false);
     }
 
     if(!rows.length) {
-      setWeather(); // 데이터가 없으면 데이터 불러오기
-      callback('날씨 데이터가 없습니다.\n잠시 후 다시 시도해주세요');
+      callback('날씨 데이터가 없습니다.\n잠시 후 다시 시도해주세요', true);
     } else {
       const $pty = ['없음', '비', '비와 눈', '눈'];
       let str = '';
@@ -100,7 +98,7 @@ var getWeather = callback => {
         str += `[시간: ${fillZero(i.hour)}:00]\n- 기온: ${i.temp}℃\n- 강수형태: ${$pty[i.pty]}\n- 강수확률: ${i.pop}%, ${i.wfKor}\n- 습도: ${i.reh}%\n\n`;
         pub = i.pub;
       });
-      callback(str + pub + ' 발표\n소하 2동 기준\n(시간은 24시간 형식)');
+      callback(str + pub + ' 발표\n소하 2동 기준\n(시간은 24시간 형식)', false);
     }
   });
 }

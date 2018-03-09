@@ -47,7 +47,10 @@ router.route('/message').post((req, res) => {
     }
 
     case '급식': {
-      meal.get(data => {
+      meal.get((data, err) => {
+        if(err) {
+          meal.set();
+        }
         res.json({
           'message': {
             'text': data,
@@ -66,7 +69,10 @@ router.route('/message').post((req, res) => {
     }
 
     case '날씨': {
-      weather.get(data => {
+      weather.get((data, err) => {
+        if(err) {
+          weather.set();
+        }
         res.json({
           'message': {
             'text': data
