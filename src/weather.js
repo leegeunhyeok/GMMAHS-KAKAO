@@ -1,3 +1,12 @@
+/*
+* weather.js
+* 
+* 기상청의 RSS를 기반으로 한 데이터를
+* 서버 DB에 저장 및 제공
+*
+*/
+
+
 var request = require('request'),
   cheerio = require('cheerio');
 

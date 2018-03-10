@@ -1,3 +1,11 @@
+/*
+* meal.js
+* 
+* 교육청의 본교 급식 데이터를 파싱하여
+* 서버 DB에 저장 및 제공
+*
+*/
+
 var request = require('request'),
   cheerio = require('cheerio');
 

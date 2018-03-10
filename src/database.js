@@ -12,7 +12,7 @@ var init = () => {
   db = mysql.createConnection({
     host:'localhost',
     port:'3306',
-    user:'',
+    user: '',
     password:'',
     database:''
   });
