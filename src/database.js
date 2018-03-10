@@ -12,16 +12,15 @@ var init = () => {
   db = mysql.createConnection({
     host:'localhost',
     port:'3306',
-    user: '',
-    password:'',
-    database:''
+    user: 'root',
+    password:'1234',
+    database:'gmmahs'
   });
   console.log('Create database connection');
 }
 
 // 함수 호출된 시점의 급식 데이터 불러오기 
 var setMeal = (dateStr, meal) => {
-
   // 기존의 급식데이터 삭제 
   db.query('DELETE FROM meal', () => { 
     
@@ -33,6 +32,7 @@ var setMeal = (dateStr, meal) => {
         return;
       }
 
+      // 변경된 행이 있을 때
       if(rows.affectedRows) {
         console.log(dateStr + ' Meal data inserted');
       }
@@ -48,6 +48,7 @@ var getMeal = callback => {
       callback('서버에 문제가 발생하였습니다.', false);
     }
 
+    // 조회된 데이터 길이 
     if(rows.length) {
       let info = rows[0].info ? rows[0].info : '급식이 없습니다.';
       callback(rows[0].date + '\n\n' + info, false);
@@ -57,6 +58,7 @@ var getMeal = callback => {
   });
 }
 
+// RSS 날씨 불러와서 저장 
 var setWeather = weather => {
   var data = '';
   weather.forEach(i => {
@@ -74,6 +76,7 @@ var setWeather = weather => {
         return;
       }
 
+      // 추가된 행이 있을 때
       if(rows.affectedRows) {
         console.log('Weather data inserted');
       }
@@ -81,6 +84,7 @@ var setWeather = weather => {
   })
 }
 
+// DB에서 날씨 데이터 불러오기 
 var getWeather = callback => {
   db.query('SELECT * FROM weather', (err, rows) => {
     if(err) {
@@ -88,6 +92,7 @@ var getWeather = callback => {
       callback('서버에 문제가 발생하였습니다.', false);
     }
 
+    // 조회된 데이터 길이 확인
     if(!rows.length) {
       callback('날씨 데이터가 없습니다.\n잠시 후 다시 시도해주세요', true);
     } else {

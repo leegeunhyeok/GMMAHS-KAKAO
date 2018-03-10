@@ -1,3 +1,20 @@
+/*
+* GMMAHS-KAKAO
+* 
+* - 광명경영회계고등학교 카카오톡 플러스친구 API 서버
+* - 데이터베이스: MariaDB
+* - 급식정보 제공
+* - 버스정보 제공
+* - 날씨정보 제공 
+* 
+* 개발자 : 이근혁
+* Github: Leegeunhyeok
+* Link: https://github.com/Leegeunhyeok/GMMAHS-KAKAO
+*
+* MIT license
+* 
+*/
+
 const $main = {
   'type': 'buttons',
   'buttons': ['급식', '날씨', '버스', '도움말', '정보', '개발자']
@@ -8,20 +25,51 @@ var http = require('http'),
   bodyParser = require('body-parser'), // HTML Body 데이터 읽기(POST)
   cheerio = require('cheerio'); // HTML 파싱
 
-var schedule = require('node-schedule'), // 스케줄러 
-  rule = new schedule.RecurrenceRule();
+// 스케줄러 모듈 
+var schedule = require('node-schedule'); 
 
+// 데이터베이스 작업 모듈 
 var db = require('./src/database.js');
-var meal = require('./src/meal.js'); // 급식 정보 파싱
-var weather = require('./src/weather.js'); // 날씨 RSS 파싱
-var bus = require('./src/bus.js'); // OpenAPI 버스 정보 조회
 
+// 급식 데이터 파싱 모듈 
+var meal = require('./src/meal.js');
+
+// 날씨 RSS 파싱 모듈
+var weather = require('./src/weather.js'); 
+
+// 버스 정보 파싱 모듈
+var bus = require('./src/bus.js'); 
+
+// 익스프레스 객체 
 var app = express();
+
+// 익스프레스 라우터 객체 
 var router = express.Router();
 
-app.use(bodyParser.urlencoded({extended: false}));
+// 미들웨어 사용 설정 
+app.use(bodyParser.urlencoded({extended: false})); 
 app.use(bodyParser.json());
 app.use(router);
+
+// 개발 테스트용 form 페이지 
+// 실제 서비스중에는 사용 안함
+/*
+router.route('/test').get((req, res) => {
+  const fs = require('fs');
+  fs.readFile('./test.html', (err, data) => {
+    if(err) {
+      console.log(err);
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      res.write(err);
+      res.end();
+      return;
+    }
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.write(data);
+    res.end();
+  });
+});
+*/
 
 // 플러스친구 추가 시 보여줄 버튼 목록
 router.route('/keyboard').get((req, res) => { 
@@ -30,10 +78,11 @@ router.route('/keyboard').get((req, res) => {
 
 // 사용자가 메시지를 전송하면 응답 
 router.route('/message').post((req, res) => {
-  const $content = req.body.content; // 사용자가 입력한 텍스트 데이터 
-  var send; // 전송할 json 저장 변수
+  // 사용자가 입력한 텍스트 데이터 
+  const $content = req.body.content; 
 
-  switch($content) { // 텍스트에 따라 적절한 응답하기 
+  // 텍스트에 따라 적절한 응답하기
+  switch($content) {  
     case '처음으로': {
       res.json({
         'message': {
@@ -50,6 +99,7 @@ router.route('/message').post((req, res) => {
     case '급식': {
       meal.get((data, err) => {
         if(err) {
+          // 에러 발생 시 새로운 급식으로 불러오기 
           meal.set();
         }
         res.json({
@@ -68,6 +118,7 @@ router.route('/message').post((req, res) => {
     case '날씨': {
       weather.get((data, err) => {
         if(err) {
+          // 에러 발생 시 새로운 날씨로 불러오기 
           weather.set();
         }
         res.json({
@@ -148,10 +199,13 @@ router.route('/message').post((req, res) => {
     }
 
     default: {
-      if($content.indexOf('정류장') !== -1) {
+      // 사용자 입력 데이터에 정류장이라는 단어가 있는지 확인 
+      if($content.match(/^정류장 /)) {
         // 맨 앞의 정류장 문자와 공백을 기준으로 나눔
-        var msg = $content.split(/^정류장 /); // 예) 정류장 하안사거리 => ['', '하안사거리']
-        bus.search(msg[1], result => { // 입력한 버스정류장을 OpenAPI 에서 검색 
+        // 예) 정류장 하안사거리 => ['', '하안사거리']
+        var msg = $content.split(/^정류장 /); 
+        // 입력한 버스정류장을 OpenAPI 에서 검색 
+        bus.search(msg[1], result => { 
           res.json({
             'message': {
               'text': result
@@ -159,6 +213,7 @@ router.route('/message').post((req, res) => {
           });
         }); 
       } else {  
+        // 정류장을 제외한 기타 문자들은 알 수 없는 명령으로 처리 
         res.json({
           'message': {
             'text': '알 수 없는 명령입니다.\n\n[도움말]을 입력하면 도와드릴게요!\n\n처음으로 돌아가고싶으시면\n[처음으로]를 입력해주세요!'
@@ -173,12 +228,17 @@ router.route('/message').post((req, res) => {
 // Express 서버 시작, 포트 지정 
 http.createServer(app).listen(8080, () => {
   console.log('Gmmahs KAKAO server start.');
+
+  // 데이터베이스 초기화 
   db.init();
+
+  // 매일 00:00:01 급식데이터 갱신
   schedule.scheduleJob('1 0 0 * * * *', () => {
-    meal.set(); // 매일 00:00:01 급식데이터 갱신
+    meal.set();
   });
 
+  // 매 시간마다 날씨데이터 갱신
   schedule.scheduleJob('0 0 * * * * *', () => {
-    weather.set(); // 매 시간마다 날씨데이터 갱신 
+    weather.set();  
   })
 });
