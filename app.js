@@ -142,6 +142,7 @@ router.route('/message').post((req, res) => {
           '[도움말]\n명령어를 확인할 수 있어요'
         }
       });
+      break;
     }
 
     default: {
