@@ -27,7 +27,7 @@ const $route = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKe
 const $info = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey=';
 
 // Open API Key
-const $KEY = 'ueetzd6IwyycNhCcWK4ROb%2FguB7qnp0Wc6iJQFl4mZH9%2Fp7KFBMhv8YZGuRfN8expGwaMnXxhzGAaEqmQuIMjw%3D%3D';
+const $KEY = 'API_KEY';
 
 // 입력한 텍스트를 기반으로 광명에 위치한 정류장을 조회 
 var getStation = str => {
