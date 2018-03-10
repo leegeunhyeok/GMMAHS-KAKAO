@@ -13,7 +13,8 @@ var schedule = require('node-schedule'), // 스케줄러
 
 var db = require('./src/database.js');
 var meal = require('./src/meal.js'); // 급식 정보 파싱
-var weather = require('./src/weather.js');
+var weather = require('./src/weather.js'); // 날씨 RSS 파싱
+var bus = require('./src/bus.js'); // OpenAPI 버스 정보 조회
 
 var app = express();
 var router = express.Router();
@@ -81,7 +82,8 @@ router.route('/message').post((req, res) => {
     case '버스': {
       res.json({
         'message': {
-          'text': '현재 구현 중인 기능입니다.'
+          'text': '버스정류장 이름을 아래와 같이\n입력해주세요!\n\n' + 
+          '\'정류장 정류장이름\'\n(예시) 정류장 하안사거리'
         }
       });
       break;
@@ -146,11 +148,23 @@ router.route('/message').post((req, res) => {
     }
 
     default: {
-      res.json({
-        'message': {
-          'text': '알 수 없는 명령입니다.\n\n[도움말]을 입력하면 도와드릴게요!\n\n처음으로 돌아가고싶으시면 [처음으로]를 입력해주세요!'
-        }
-      });
+      if($content.indexOf('정류장') !== -1) {
+        // 맨 앞의 정류장 문자와 공백을 기준으로 나눔
+        var msg = $content.split(/^정류장 /); // 예) 정류장 하안사거리 => ['', '하안사거리']
+        bus.search(msg[1], result => { // 입력한 버스정류장을 OpenAPI 에서 검색 
+          res.json({
+            'message': {
+              'text': result
+            }
+          });
+        }); 
+      } else {  
+        res.json({
+          'message': {
+            'text': '알 수 없는 명령입니다.\n\n[도움말]을 입력하면 도와드릴게요!\n\n처음으로 돌아가고싶으시면\n[처음으로]를 입력해주세요!'
+          }
+        });
+      }
       break;
     }
   }
@@ -165,6 +179,6 @@ http.createServer(app).listen(8080, () => {
   });
 
   schedule.scheduleJob('0 0 * * * * *', () => {
-    weather.set(); // 매 시간마다 급식 데이터 갱신 
+    weather.set(); // 매 시간마다 날씨데이터 갱신 
   })
 });
