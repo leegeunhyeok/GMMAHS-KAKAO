@@ -27,7 +27,7 @@ const $route = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKe
 const $info = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey=';
 
 // Open API Key
-const $KEY = 'API_KEY';
+const $KEY = require('../key/key.js').getKey();
 
 // 입력한 텍스트를 기반으로 광명에 위치한 정류장을 조회 
 var getStation = str => {
@@ -55,7 +55,7 @@ var getStation = str => {
       if(station.length === 0) {
         reject('해당 정류장을 찾을 수 없습니다\n다시 입력해주세요');
       } else if(station.length > 6) {
-        reject('검색된 정류장이 너무 많습니다\n더 자세하게 입력해주세요');
+        reject('검색된 정류장이 너무 많습니다\n더 자세하게 입력해주세요\n\n검색된 정류장 수: ' + station.length);
       } else {
         resolve(station);
       }
