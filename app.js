@@ -17,7 +17,7 @@
 
 const $main = {
   'type': 'buttons',
-  'buttons': ['급식', '날씨', '버스', '도움말', '정보', '개발자']
+  'buttons': ['급식', '날씨', '버스', '정보', '개발자']
 };
 
 var http = require('http'), 
@@ -90,7 +90,7 @@ router.route('/message').post((req, res) => {
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons': ['급식', '날씨', '버스', '도움말', '정보', '개발자']
+          'buttons': ['급식', '날씨', '버스', '정보', '개발자']
         }
       });
       break;
@@ -109,6 +109,10 @@ router.route('/message').post((req, res) => {
               'label': '이번달 급식 확인하기',
               'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
             },
+            'keyboard': {
+              'type': 'buttons',
+              'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+            }
           }
         });
       });
@@ -124,6 +128,10 @@ router.route('/message').post((req, res) => {
         res.json({
           'message': {
             'text': data
+          },
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
           }
         });
       });
@@ -152,6 +160,10 @@ router.route('/message').post((req, res) => {
             'label': '소스코드',
             'url': 'https://github.com/leegeunhyeok/GMMAHS-KAKAO'
           },
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+          }
         }
       });
       break;  
@@ -177,25 +189,13 @@ router.route('/message').post((req, res) => {
           'text': '[개발자 블로그]\n\n개발자의 개인 블로그입니다!\n다양한 글과 작품이 올라와있습니다~!\n\n' +
           '다음 티스토리\nhttp://codevkr.tistory.com\n\n\n네이버\nhttp://blog.naver.com/lghlove0509\n\n\n' + 
           '개인 포트폴리오 웹사이트\nhttps://leegeunhyeok.github.io'
+        },
+        'keyboard': {
+          'type': 'buttons',
+          'buttons': ['급식', '날씨', '버스', '정보', '개발자']
         }
       });
       break;  
-    }
-
-    case '도움말': {
-      res.json({
-        'message': {
-          'text': '사용 가능한 명령어를 소개해드릴게요!\n\n' + 
-          '[급식]\n오늘의 급식을 확인할 수 있어요\n\n' + 
-          '[날씨]\n가까운 시간대의 날씨를 확인할 수 있어요\n\n' + 
-          '[버스]\n입력한 정류장의 버스 도착시간을 알 수 있어요\n\n' +
-          '[정보]\n본 서비스의 간단한 정보를 알 수 있어요\n\n' + 
-          '[개발자]\n개발자에 대해 알아볼 수 있어요\n\n' + 
-          '[처음으로]\n처음으로 돌아갈 수 있어요\n\n' + 
-          '[도움말]\n명령어를 확인할 수 있어요'
-        }
-      });
-      break;
     }
 
     default: {
@@ -216,7 +216,11 @@ router.route('/message').post((req, res) => {
         // 정류장을 제외한 기타 문자들은 알 수 없는 명령으로 처리 
         res.json({
           'message': {
-            'text': '알 수 없는 명령입니다.\n\n[도움말]을 입력하면 도와드릴게요!\n\n처음으로 돌아가고싶으시면\n[처음으로]를 입력해주세요!'
+            'text': '알 수 없는 명령입니다.'
+          }, 
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
           }
         });
       }
