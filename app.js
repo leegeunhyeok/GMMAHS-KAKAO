@@ -209,6 +209,10 @@ router.route('/message').post((req, res) => {
           res.json({
             'message': {
               'text': result
+            },
+            'keyboard': {
+              'type': 'buttons',
+              'buttons': ['급식', '날씨', '버스', '정보', '개발자']
             }
           });
         }); 
