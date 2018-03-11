@@ -134,7 +134,7 @@ router.route('/message').post((req, res) => {
       res.json({
         'message': {
           'text': '버스정류장 이름을 아래와 같이\n입력해주세요!\n\n' + 
-          '\'정류장 정류장이름\'\n(예시) 정류장 하안사거리'
+          '"정류장 정류장이름"\n\n[예시] 정류장 하안사거리'
         }
       });
       break;

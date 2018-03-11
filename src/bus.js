@@ -26,6 +26,9 @@ const $route = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKe
 // 버스 정보 조회 
 const $info = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey=';
 
+// API resultCode가 0이 아닐 경우 출력할 메시지 
+const API_ERR = 'API 서버에 문제가 발생하였습니다\n\n[왜 문제가 발행하나요?]\n- 일일 트래픽 제한 초과\n- 서버 접속 오류\n\n잠시 후 다시 시도하거나\n내일 다시 시도해주세요';
+
 // Open API Key
 const $KEY = require('../key/key.js').getKey();
 
@@ -43,21 +46,25 @@ var getStation = str => {
       }
       var station = [];
       var $ = cheerio.load(body);
-      console.log('[' + $('queryTime').text() + '기준]');
-      $('busStationList').each(function(idx) {
-        if($(this).find('regionName').text().indexOf('광명') !== -1) { // 지역이 광명인 정류장만 추출 
-          let name = $(this).find('stationName').text();
-          let id = $(this).find('stationId').text();
-          station.push({name: name, id: id});
+      //console.log('[' + $('queryTime').text() + '기준]');
+      if($('resultCode').text() === 0) {
+        $('busStationList').each(function(idx) {
+          if($(this).find('regionName').text().indexOf('광명') !== -1) { // 지역이 광명인 정류장만 추출 
+            let name = $(this).find('stationName').text();
+            let id = $(this).find('stationId').text();
+            station.push({name: name, id: id});
+          }
+        });
+  
+        if(station.length === 0) {
+          reject('해당 정류장을 찾을 수 없습니다\n다시 입력해주세요');
+        } else if(station.length > 6) {
+          reject('검색된 정류장이 너무 많습니다\n더 자세하게 입력해주세요\n\n검색된 정류장 수: ' + station.length);
+        } else {
+          resolve(station);
         }
-      });
-
-      if(station.length === 0) {
-        reject('해당 정류장을 찾을 수 없습니다\n다시 입력해주세요');
-      } else if(station.length > 6) {
-        reject('검색된 정류장이 너무 많습니다\n더 자세하게 입력해주세요\n\n검색된 정류장 수: ' + station.length);
       } else {
-        resolve(station);
+        reject(API_ERR);
       }
     });
   }); 
@@ -68,9 +75,6 @@ var getBus = stationId => {
   return new Promise((resolve, reject) => {
     // OpenAPI 접속 URL
     var baseUrl = $bus + $KEY + '&stationId='; 
-
-    // 도착할 버스 목록 조회
-    var $buslist = []; 
     
     // 프라미스 저장 배열 
     var $promise = [];
@@ -89,13 +93,17 @@ var getBus = stationId => {
           // 버스 데이터 저장 배열 
           var bus = [];
           var $ = cheerio.load(body);
-          $('busArrivalList').each(function(idx) {
-            let route = $(this).find('routeId').text(); // 노선 ID
-            let predictTime1 = $(this).find('predictTime1').text(); // 첫 번째 버스 도착시간
-            let predictTime2 = $(this).find('predictTIme2').text(); // 두 번째 버스 도착시간
-            bus.push({id: route, station: stationId[i].name, time1: predictTime1, time2: predictTime2});
-          });
-          resolve(bus);
+          if($('resultCode').text() === 0) {
+            $('busArrivalList').each(function(idx) {
+              let route = $(this).find('routeId').text(); // 노선 ID
+              let predictTime1 = $(this).find('predictTime1').text(); // 첫 번째 버스 도착시간
+              let predictTime2 = $(this).find('predictTIme2').text(); // 두 번째 버스 도착시간
+              bus.push({id: route, station: stationId[i].name, time1: predictTime1, time2: predictTime2});
+            });
+            resolve(bus);
+          } else {
+            reject(API_ERR);
+          }
         });
       });
     }
@@ -104,16 +112,16 @@ var getBus = stationId => {
     Promise.all($promise).then(value => {
       // 완료된 데이터 resolve 데이터로 전달
       resolve(value);
+    }).catch(msg => {
+      reject(msg);
     });
   });
 }
 
 // 버스에 대한 세부 정보 조회 
 var getBusInfo = bus => {
-  var baseUrl = $info + $KEY + '&routeId=';
-  return new Promise((reject, resolve) => {
-    // 버스 정보 배열 
-    var $buslist = []; 
+  return new Promise((resolve, reject) => {
+    var baseUrl = $info + $KEY + '&routeId=';
 
     // 프라미스 저장 배열 
     var $promise = []; 
@@ -121,10 +129,10 @@ var getBusInfo = bus => {
     // 프라미스 배열 전용 인덱스 
     var idx = 0; 
     for(let i=0; i<bus.length; i++) {
-      for(let j=0; j<bus[i].length; j++) {
+      for(let j=0; j<bus[i].length; j++, idx++) {
 
         // 프라미스 생성 및 저장 
-        $promise[idx++] = new Promise((resolve, reject) => {
+        $promise[idx] = new Promise((resolve, reject) => {
           // 버스 데이터 임시로 배열에 저장 
           var tempBus = bus[i][j]; 
 
@@ -139,39 +147,54 @@ var getBusInfo = bus => {
             }
             var bus = [];
             var $ = cheerio.load(body);
-            $('busRouteInfoItem').each(function(idx) {
-              let end = $(this).find('endStationName').text(); // 종점 
-              let number = $(this).find('routeName').text(); // 버스 번호 
-              bus.push({number: number, end: end, station: tempBus.station, time1: tempBus.time1, time2: tempBus.time2});
-              // 버스번호, 종점, 정류장이름, 첫버스 도착시간, 두번째버스 도착시간
-            });
-            resolve(bus);
+            if($('resultCode').text() === 0) {
+              $('busRouteInfoItem').each(function(idx) {
+                let end = $(this).find('endStationName').text(); // 종점 
+                let number = $(this).find('routeName').text(); // 버스 번호 
+                bus.push({number: number, end: end, station: tempBus.station, time1: tempBus.time1, time2: tempBus.time2});
+                // 버스번호, 종점, 정류장이름, 첫버스 도착시간, 두번째버스 도착시간
+              });
+              resolve(bus);
+            } else {
+              reject(API_ERR);
+            }
           });
-        }).then(result => {
-          // 배열에 누적 
-          $buslist = $buslist.concat(result);
         });
       }
     }
 
     // 모든 프라미스 동기 작업
-    Promise.all($promise).then(bus => {
+    Promise.all($promise).then($buslist => {
       resolve($buslist);
+    }).catch(msg => {
+      reject(msg);
     });
   }); 
 }
 
+var process = data => {
+  var str = '';
+  //console.log(data)
+  data.forEach(bus => {
+    //console.log(bus)
+    if(bus.time1) {
+      str += `[${bus.number}]번 버스가 [${bus.station}]정류장에\n${bus.time1}분 후 도착합니다\n`;
+    }
+  });
+  return str;
+}
+
 // 해당 버스정류장의 버스정보를 조회하여 제공 
-var search = (str, callback) => {
+var search = (keyword, callback) => {
   // 키워드에 대한 버스정류장 검색
-  getStation(str).then(station => {
+  getStation(keyword).then(station => {
     // 버스정류장에 오는 버스 목록 조회 
     return getBus(station);
   }).then(result => {
     // 버스 목록에 대한 세부 정보 조회 
     return getBusInfo(result);
   }).then(bus => {
-    callback(bus);
+    callback(process(bus));
   }).catch(err => {
     callback(err);
   });
