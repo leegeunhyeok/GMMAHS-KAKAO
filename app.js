@@ -108,11 +108,11 @@ router.route('/message').post((req, res) => {
             'message_button': {
               'label': '이번달 급식 확인하기',
               'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
-            },
-            'keyboard': {
-              'type': 'buttons',
-              'buttons': ['급식', '날씨', '버스', '정보', '개발자']
             }
+          },
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
           }
         });
       });
@@ -159,11 +159,11 @@ router.route('/message').post((req, res) => {
           'message_button': {
             'label': '소스코드',
             'url': 'https://github.com/leegeunhyeok/GMMAHS-KAKAO'
-          },
-          'keyboard': {
-            'type': 'buttons',
-            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
           }
+        },
+        'keyboard': {
+          'type': 'buttons',
+          'buttons': ['급식', '날씨', '버스', '정보', '개발자']
         }
       });
       break;  
