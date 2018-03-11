@@ -25,11 +25,20 @@ var set = () => {
     let $weekDay = $date.getDay() + 1; // 요일 
     let $week = Math.ceil($date.getDate() / 7); // 몇번째주
 
-    let $ = cheerio.load(body);
-    let meal = $(`tbody > tr:nth-child(${$week}) > td:nth-child(${$weekDay})`); // 오늘의 급식 파싱 
-    meal = meal.text().replace(/\.*[0-9]/g, '').replace(/\./g, '\n').replace(']', ']\n'); // 불필요한 문자 삭제 및 가공 
+    let $ = cheerio.load(body, {decodeEntities: false});
+    //let meal = $(`tbody:nth-child(${$week}) > td:nth-child(${$weekDay})`); // 오늘의 급식 파싱 
+    //meal = meal.text().replace(/\.*[0-9]/g, '').replace(/\./g, '\n').replace(']', ']\n'); // 불필요한 문자 삭제 및 가공 
+    let meal;
+    let countDay = 1;
+    $('tbody > tr > td').each(function(idx) {
+      if($(this).text().match(/^[0-9]{1,2}/)) {
+        if(countDay === $day) {
+          meal = $(this).html().replace(/<div>[0-9]{1,2}<br>\[중식\]<br>/, '').replace(/<br>/g, '\n').replace(/<\/div>$/, '');
+        } 
+        countDay++;
+      }
+    });
     let dateStr = `${$month}월 ${$day}일 ${$weekStr[$weekDay-1]}요일`
-
     db.setMeal(dateStr, meal);
   });
 }
