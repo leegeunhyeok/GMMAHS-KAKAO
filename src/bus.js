@@ -47,7 +47,7 @@ var getStation = str => {
       var station = [];
       var $ = cheerio.load(body);
       //console.log('[' + $('queryTime').text() + '기준]');
-      if($('resultCode').text() === 0) {
+      if($('resultCode').text() === '0') {
         $('busStationList').each(function(idx) {
           if($(this).find('regionName').text().indexOf('광명') !== -1) { // 지역이 광명인 정류장만 추출 
             let name = $(this).find('stationName').text();
@@ -93,7 +93,7 @@ var getBus = stationId => {
           // 버스 데이터 저장 배열 
           var bus = [];
           var $ = cheerio.load(body);
-          if($('resultCode').text() === 0) {
+          if($('resultCode').text() === '0') {
             $('busArrivalList').each(function(idx) {
               let route = $(this).find('routeId').text(); // 노선 ID
               let predictTime1 = $(this).find('predictTime1').text(); // 첫 번째 버스 도착시간
@@ -147,7 +147,7 @@ var getBusInfo = bus => {
             }
             var bus = [];
             var $ = cheerio.load(body);
-            if($('resultCode').text() === 0) {
+            if($('resultCode').text() === '0') {
               $('busRouteInfoItem').each(function(idx) {
                 let end = $(this).find('endStationName').text(); // 종점 
                 let number = $(this).find('routeName').text(); // 버스 번호 
@@ -173,14 +173,14 @@ var getBusInfo = bus => {
 }
 
 var process = data => {
-  var str = '';
-  //console.log(data)
-  data.forEach(bus => {
-    //console.log(bus)
+  let str = '';
+  for(let i=0; i < data.length; i++) {
+    let bus = data[i][0];
     if(bus.time1) {
-      str += `[${bus.number}]번 버스가 [${bus.station}]정류장에\n${bus.time1}분 후 도착합니다\n`;
+      str += `--[${bus.number}번 버스]--\n${bus.station} 정류장에\n${bus.time1}분 후 도착합니다.\n다음 버스는 ${bus.time2 ? bus.time2 + '분 후 도착합니다.' : '없습니다'}\n---------------\n\n`;
     }
-  });
+  }
+  //console.log(str);
   return str;
 }
 
