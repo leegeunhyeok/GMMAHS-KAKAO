@@ -33,7 +33,13 @@ var set = () => {
     $('tbody > tr > td').each(function(idx) {
       if($(this).text().match(/^[0-9]{1,2}/)) {
         if(countDay === $day) {
-          meal = $(this).html().replace(/<div>[0-9]{1,2}<br>\[중식\]<br>/, '').replace(/<br>/g, '\n').replace(/<\/div>$/, '');
+          meal = $(this).html().replace(/^<div>[0-9]{1,2}<br>\[중식\]<br>/, '').replace(/<br>/g, '\n').replace(/<\/div>$/, '');
+
+          // 만약 파싱 데이터가 <div>25 와 같이 비정상적으로 수행되었을 때,
+          // 급식이 없는 요일을 파싱하면 위와 같이 파싱 됨
+          if(meal.match(/^<div/)) { 
+            meal = '';
+          }
         } 
         countDay++;
       }
