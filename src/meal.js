@@ -16,7 +16,7 @@ const $url = 'https://stu.goe.go.kr/sts_sci_md00_001.do?schulCode=J100000488&sch
 const $weekStr = ['일', '월', '화', '수', '목', '금', '토'];
 
 // 현재 시점의 급식정보 파싱 
-var set = () => {
+var set = tomorrow => {
   request($url, (err, res, body) => {
     if(err) return;
     let $date = new Date(); // 현재 시점의 날짜
@@ -25,9 +25,14 @@ var set = () => {
     let $weekDay = $date.getDay() + 1; // 요일 
     let $week = Math.ceil($date.getDate() / 7); // 몇번째주
 
+    // 내일이 이번달 마지막날보다 작거나 같은 경우 (만약 내일이 새로운 달이라면 파싱에 문제가 생길 수 있기때문)
+    let $last_day = new Date($date.getYear(), $date.getMonth() + 1, 0); // 이번달의 마지막 날
+    let changeTomorrow = tomorrow && $day <= $last_day.getDate(); // 함수의 tomorrow 인자가 참일경우 (내일 급식으로 변경하기)
+    if(changeTomorrow) {
+      $day++;
+    }
+
     let $ = cheerio.load(body, {decodeEntities: false});
-    //let meal = $(`tbody:nth-child(${$week}) > td:nth-child(${$weekDay})`); // 오늘의 급식 파싱 
-    //meal = meal.text().replace(/\.*[0-9]/g, '').replace(/\./g, '\n').replace(']', ']\n'); // 불필요한 문자 삭제 및 가공 
     let meal;
     let countDay = 1;
     $('tbody > tr > td').each(function(idx) {
@@ -45,6 +50,9 @@ var set = () => {
       }
     });
     let dateStr = `${$month}월 ${$day}일 ${$weekStr[$weekDay-1]}요일`
+    if(changeTomorrow) {
+      dateStr = '[내일의 급식]\n\n' + dateStr;
+    }
     db.setMeal(dateStr, meal);
   });
 }

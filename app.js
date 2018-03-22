@@ -142,7 +142,8 @@ router.route('/message').post((req, res) => {
       res.json({
         'message': {
           'text': '버스정류장 이름을 아래와 같이\n입력해주세요!\n\n' + 
-          '"정류장 정류장이름"\n\n[예시] 정류장 하안사거리'
+          '"정류장 정류장이름"\n\n[예시] 정류장 하안사거리\n\n\n' +
+          '취소하고싶으시면 [처음으로]를\n입력해주세요!'
         }
       });
       break;
@@ -152,7 +153,7 @@ router.route('/message').post((req, res) => {
       res.json({
         'message': {
           'text': '광명경영회계고등학교 정보제공\n서비스입니다!\n\n' +
-          '기능 및 오류 신고는\n아래에 문의해주세요~\n\n> lghlove0509@naver.com\n\n' +
+          '기능 및 오류 신고는\n아래에 문의해주세요~\n\n> 챗봇에서 상담원으로 전환하기\n\n> lghlove0509@naver.com\n\n' +
           '> 010-4096-4475\n\n' +
           '본 서비스는 오픈소스로 Github에 모두 공개되어있으며 MIT 라이센스를 적용하고 있습니다!\n\n' + 
           'Server: Node.js\nDB: MariaDB',
@@ -243,6 +244,12 @@ http.createServer(app).listen(8080, () => {
   // 매일 00:00:01 급식데이터 갱신
   schedule.scheduleJob('1 0 0 * * * *', () => {
     meal.set();
+  });
+
+  // 매일 14:00:00 급식데이터 갱신 (내일 급식으로)
+  // 점심시간이 지난 후 (2시에 내일 급식으로 갱신)
+  schedule.scheduleJob('0 0 14 * * * *', () => {
+    meal.set(true);
   });
 
   // 매 시간마다 날씨데이터 갱신
