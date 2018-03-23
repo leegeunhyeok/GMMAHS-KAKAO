@@ -22,14 +22,22 @@ var set = tomorrow => {
     let $date = new Date(); // 현재 시점의 날짜
     let $month = $date.getMonth() + 1; // 월
     let $day = $date.getDate(); // 일
-    let $weekDay = $date.getDay() + 1; // 요일 
+    let $weekDay = $date.getDay(); // 요일 
     let $week = Math.ceil($date.getDate() / 7); // 몇번째주
 
     // 내일이 이번달 마지막날보다 작거나 같은 경우 (만약 내일이 새로운 달이라면 파싱에 문제가 생길 수 있기때문)
     let $last_day = new Date($date.getYear(), $date.getMonth() + 1, 0); // 이번달의 마지막 날
     let changeTomorrow = tomorrow && $day <= $last_day.getDate(); // 함수의 tomorrow 인자가 참일경우 (내일 급식으로 변경하기)
     if(changeTomorrow) {
-      $day++;
+      // 내일 
+      $day++; 
+
+      // 내일의 요일 
+      if($weekDay+1 > 6) {
+        $weekDay = 0;
+      } else {
+        $weekDay++;
+      }
     }
 
     let $ = cheerio.load(body, {decodeEntities: false});
@@ -49,7 +57,7 @@ var set = tomorrow => {
         countDay++;
       }
     });
-    let dateStr = `${$month}월 ${$day}일 ${$weekStr[$weekDay-1]}요일`
+    let dateStr = `${$month}월 ${$day}일 ${$weekStr[$weekDay]}요일`
     if(changeTomorrow) {
       dateStr = '[내일의 급식]\n\n' + dateStr;
     }
