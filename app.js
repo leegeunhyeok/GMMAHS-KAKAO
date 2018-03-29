@@ -17,7 +17,7 @@
 
 const $main = {
   'type': 'buttons',
-  'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+  'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
 };
 
 var http = require('http'), 
@@ -39,6 +39,9 @@ var weather = require('./src/weather.js');
 
 // 버스 정보 파싱 모듈
 var bus = require('./src/bus.js'); 
+
+// DialogFlow 모듈
+var dialogflow = require('./src/dialogflow.js');
 
 // 익스프레스 객체 
 var app = express();
@@ -81,6 +84,9 @@ router.route('/message').post((req, res) => {
   // 사용자가 입력한 텍스트 데이터 
   const $content = req.body.content; 
 
+  // 사용자 식별 키
+  const $user_key = req.body.user_key;
+
   // 텍스트에 따라 적절한 응답하기
   switch($content) {  
     case '처음으로': {
@@ -90,7 +96,7 @@ router.route('/message').post((req, res) => {
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+          'buttons':  ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
         }
       });
       break;
@@ -112,7 +118,7 @@ router.route('/message').post((req, res) => {
           },
           'keyboard': {
             'type': 'buttons',
-            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+            'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
           }
         });
       });
@@ -131,7 +137,7 @@ router.route('/message').post((req, res) => {
           },
           'keyboard': {
             'type': 'buttons',
-            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+            'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
           }
         });
       });
@@ -164,7 +170,7 @@ router.route('/message').post((req, res) => {
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+          'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
         }
       });
       break;  
@@ -193,10 +199,20 @@ router.route('/message').post((req, res) => {
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+          'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
         }
       });
       break;  
+    }
+
+    case '자유채팅': {
+      res.json({
+        'message': {
+          'text': '챗봇과 자유롭게 채팅할 수 있는 기능입니다!\n' +
+          '학교에 대해 궁금한것을 물어보거나 여러가지를 물어보세요~\n\n' +
+          '[처음으로] 또는 나가고 싶다고 얘기하면 대화를 종료합니다.'
+        }
+      });
     }
 
     default: {
@@ -213,19 +229,63 @@ router.route('/message').post((req, res) => {
             },
             'keyboard': {
               'type': 'buttons',
-              'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+              'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
             }
           });
         }); 
       } else {  
-        // 정류장을 제외한 기타 문자들은 알 수 없는 명령으로 처리 
-        res.json({
-          'message': {
-            'text': '알 수 없는 명령입니다.'
-          }, 
-          'keyboard': {
-            'type': 'buttons',
-            'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+        // 정류장을 제외한 기타 문자들은 DialogFlow로 위임
+        dialogflow.sendMessage($content, $user_key, data => {
+          if(data) {
+            let params = data.result.parameters;
+            let intent = data.result.metadata.intentName;
+            let speech = data.result.fulfillment.speech;
+
+            if(intent === 'meal') { // DialogFlow 급식 
+              meal.get((data, err) => {
+                if(err) {
+                  // 에러 발생 시 새로운 급식으로 불러오기 
+                  meal.set();
+                }
+                res.json({
+                  'message': {
+                    'text': data,
+                    'message_button': {
+                      'label': '이번달 급식 확인하기',
+                      'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
+                    }
+                  }
+                });
+              });
+            } else if(intent === 'weather') { // DialogFLow 날씨 
+              weather.get((data, err) => {
+                if(err) {
+                  // 에러 발생 시 새로운 날씨로 불러오기 
+                  weather.set();
+                }
+                res.json({
+                  'message': {
+                    'text': data
+                  }
+                });
+              });
+            } else { // 기타 질문 
+              res.json({
+                'message': {
+                  'text': speech
+                }
+              });
+            }
+          } else {
+            res.json({
+              'message': {
+                'text': '알 수 없는 명령입니다.'
+              }, 
+              'keyboard': {
+                'type': 'buttons',
+                'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+              }
+            });
           }
         });
       }
