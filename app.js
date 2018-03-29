@@ -270,6 +270,16 @@ router.route('/message').post((req, res) => {
                   }
                 });
               });
+            } else if(intent === 'exit') {
+              res.json({
+                'message': {
+                  'text': speech
+                },
+                'keyboard': {
+                  'type': 'buttons',
+                  'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+                }
+              });
             } else { // 기타 질문 
               res.json({
                 'message': {
