@@ -290,7 +290,7 @@ router.route('/message').post((req, res) => {
           } else {
             res.json({
               'message': {
-                'text': '알 수 없는 명령입니다.'
+                'text': '자유채팅 봇에 문제가 발생했습니다'
               }, 
               'keyboard': {
                 'type': 'buttons',
