@@ -283,7 +283,7 @@ router.route('/message').post((req, res) => {
               }, 
               'keyboard': {
                 'type': 'buttons',
-                'buttons': ['급식', '날씨', '버스', '정보', '개발자']
+                'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
               }
             });
           }
