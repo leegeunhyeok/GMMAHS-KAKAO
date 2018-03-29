@@ -250,7 +250,7 @@ router.route('/message').post((req, res) => {
                 }
                 res.json({
                   'message': {
-                    'text': data,
+                    'text': '제가 찾은 급식정보에요!\n\n' + data,
                     'message_button': {
                       'label': '이번달 급식 확인하기',
                       'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
@@ -258,7 +258,7 @@ router.route('/message').post((req, res) => {
                   }
                 });
               });
-            } else if(intent === 'weather') { // DialogFLow 날씨 
+            } else if(intent === 'weather') { // DialogFlow 날씨 
               weather.get((data, err) => {
                 if(err) {
                   // 에러 발생 시 새로운 날씨로 불러오기 
@@ -266,9 +266,39 @@ router.route('/message').post((req, res) => {
                 }
                 res.json({
                   'message': {
-                    'text': data
+                    'text': '날씨 정보를 확인해봤어요!\n\n' + data
                   }
                 });
+              });
+            } else if(intent === 'school_notice') { // DialogFlow 공지사항
+              res.json({
+                'message': {
+                  'text': speech,
+                  'message_button': {
+                    'label': '학교 소식 확인하기',
+                    'url': 'http://www.gmma.hs.kr/wah/main/bbs/board/list.htm?menuCode=68'
+                  }
+                }
+              });
+            } else if(intent === 'school_website') { // DialogFlow 학교 홈페이지 
+              res.json({
+                'message': {
+                  'text': speech,
+                  'message_button': {
+                    'label': '학교 홈페이지',
+                    'url': 'http://www.gmma.hs.kr'
+                  }
+                }
+              });
+            } else if(intent === 'school_student_council') {
+              res.json({
+                'message': {
+                  'text': speech,
+                  'message_button': {
+                    'label': '학생회 페이스북',
+                    'url': 'https://www.facebook.com/gmmahs'
+                  }
+                }
               });
             } else if(intent === 'exit') {
               res.json({
