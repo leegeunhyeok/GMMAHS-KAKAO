@@ -11,7 +11,7 @@
 *
 */
 
-var request = require('request'),
+const request = require('request'),
   cheerio = require('cheerio');
 
 // 정류장 조회 EndPoint
@@ -33,7 +33,7 @@ const API_ERR = 'API 서버에 문제가 발생하였습니다\n\n[왜 문제가
 const $KEY = require('../key/key.js').getKey();
 
 // 입력한 텍스트를 기반으로 광명에 위치한 정류장을 조회 
-var getStation = str => {
+const getStation = str => {
   return new Promise((resolve, reject) => { // 동기 작업을 위해 프라미스 생성 
     // OpenAPI 접속 URL
     var url = $station + $KEY + '&keyword=' + encodeURIComponent(str);
@@ -71,7 +71,7 @@ var getStation = str => {
 }
 
 // 해당 정류장에 도착할 예정인 버스 조회
-var getBus = stationId => {
+const getBus = stationId => {
   return new Promise((resolve, reject) => {
     // OpenAPI 접속 URL
     var baseUrl = $bus + $KEY + '&stationId='; 
@@ -119,7 +119,7 @@ var getBus = stationId => {
 }
 
 // 버스에 대한 세부 정보 조회 
-var getBusInfo = bus => {
+const getBusInfo = bus => {
   return new Promise((resolve, reject) => {
     var baseUrl = $info + $KEY + '&routeId=';
 
@@ -172,7 +172,7 @@ var getBusInfo = bus => {
   }); 
 }
 
-var process = data => {
+const process = data => {
   let str = '';
   for(let i=0; i < data.length; i++) {
     let bus = data[i][0];
@@ -185,7 +185,7 @@ var process = data => {
 }
 
 // 해당 버스정류장의 버스정보를 조회하여 제공 
-var search = (keyword, callback) => {
+const search = (keyword, callback) => {
   // 키워드에 대한 버스정류장 검색
   getStation(keyword).then(station => {
     // 버스정류장에 오는 버스 목록 조회 

@@ -4,7 +4,7 @@ const $KEY = require('../key/token.js').getToken();
 
 const app = apiai($KEY);
 
-var sendMessage = (msg, session, callback) => {
+const sendMessage = (msg, session, callback) => {
   let request = app.textRequest(msg, {
     sessionId: session
   });

@@ -17,37 +17,49 @@
 
 const $main = {
   'type': 'buttons',
-  'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+  'buttons': ['급식', '시간표', '날씨', '버스', '자유채팅', '정보']
 };
 
-var http = require('http'), 
+const $buttons = [
+  '급식', 
+  '시간표',
+  '날씨', 
+  '버스', 
+  '자유채팅', 
+  '정보'
+];
+
+const http = require('http'), 
   express = require('express'), // REST API 서버로 구현
   bodyParser = require('body-parser'), // HTML Body 데이터 읽기(POST)
   cheerio = require('cheerio'); // HTML 파싱
 
 // 스케줄러 모듈 
-var schedule = require('node-schedule'); 
+const schedule = require('node-schedule'); 
 
 // 데이터베이스 작업 모듈 
-var db = require('./src/database.js');
+const db = require('./src/database.js');
 
 // 급식 데이터 파싱 모듈 
-var meal = require('./src/meal.js');
+const meal = require('./src/meal.js');
+
+// 시간표 데이터 파싱 모듈
+const timetable = require('./src/timetable.js');
 
 // 날씨 RSS 파싱 모듈
-var weather = require('./src/weather.js'); 
+const weather = require('./src/weather.js'); 
 
 // 버스 정보 파싱 모듈
-var bus = require('./src/bus.js'); 
+const bus = require('./src/bus.js'); 
 
 // DialogFlow 모듈
-var dialogflow = require('./src/dialogflow.js');
+const dialogflow = require('./src/dialogflow.js');
 
 // 익스프레스 객체 
-var app = express();
+const app = express();
 
 // 익스프레스 라우터 객체 
-var router = express.Router();
+const router = express.Router();
 
 // 미들웨어 사용 설정 
 app.use(bodyParser.urlencoded({extended: false})); 
@@ -96,7 +108,7 @@ router.route('/message').post((req, res) => {
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons':  ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+          'buttons': $buttons
         }
       });
       break;
@@ -118,11 +130,22 @@ router.route('/message').post((req, res) => {
           },
           'keyboard': {
             'type': 'buttons',
-            'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+            'buttons': $buttons
           }
         });
       });
       break;  
+    }
+
+    case '시간표': {
+      res.json({
+        'message': {
+          'text': '시간표 형식을 아래와 같이\n입력해주세요!\n\n' + 
+          '"@학년 @반 @요일 시간표"\n\n[예시] 1학년 1반 월요일 시간표\n\n\n' + 
+          '취소하고싶으시면 [처음으로]를\n입력해주세요!'
+        }
+      });
+      break;
     }
 
     case '날씨': {
@@ -137,7 +160,7 @@ router.route('/message').post((req, res) => {
           },
           'keyboard': {
             'type': 'buttons',
-            'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+            'buttons': $buttons
           }
         });
       });
@@ -148,7 +171,7 @@ router.route('/message').post((req, res) => {
       res.json({
         'message': {
           'text': '버스정류장 이름을 아래와 같이\n입력해주세요!\n\n' + 
-          '"정류장 정류장이름"\n\n[예시] 정류장 하안사거리\n\n\n' +
+          '"정류장 @@@"\n\n[예시] 정류장 하안사거리\n\n\n' +
           '취소하고싶으시면 [처음으로]를\n입력해주세요!'
         }
       });
@@ -170,7 +193,7 @@ router.route('/message').post((req, res) => {
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+          'buttons': ['개발자', '처음으로']
         }
       });
       break;  
@@ -199,7 +222,7 @@ router.route('/message').post((req, res) => {
         },
         'keyboard': {
           'type': 'buttons',
-          'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+          'buttons': $buttons
         }
       });
       break;  
@@ -217,8 +240,31 @@ router.route('/message').post((req, res) => {
     }
 
     default: {
-      // 사용자 입력 데이터에 정류장이라는 단어가 있는지 확인 
-      if($content.match(/^정류장 /)) {
+      if($content.match(/^[1-3]학년 [0-9]{1,2}반 [일월화수목금토]요일 시간표/)) { // 시간표 
+        let week = ['일', '월', '화', '수', '목', '금', '토'];
+        let grade_idx = $content.search(/^[1-3]학년/);
+        let grade_num = $content[grade_idx];
+        let class_idx = $content.search(/[0-9]{1,2}반/);
+        let class_num = $content[class_idx];
+        let weekday_idx = $content.search(/[일월화수목금토]요일/);
+        let weekday_num = week.indexOf($content[weekday_idx]);
+
+        if(!($content[class_idx + 1] === '반')) { // 1~9반 제외(반이 2자리수인 경우)
+          class_num += $content[class_idx + 1];
+        }
+        // 해당 학급의 시간표 데이터 가져오기 
+        timetable.get(parseInt(grade_num), parseInt(class_num), weekday_num).then(msg => {
+          res.json({
+            'message': {
+              'text': msg
+            },
+            'keyboard': {
+              'type': 'buttons',
+              'buttons': $buttons
+            }
+          });
+        });
+      } else if($content.match(/^정류장 /)) { // 사용자 입력 데이터에 정류장이라는 단어가 있는지 확인 
         // 맨 앞의 정류장 문자와 공백을 기준으로 나눔
         // 예) 정류장 하안사거리 => ['', '하안사거리']
         var msg = $content.split(/^정류장 /); 
@@ -230,7 +276,7 @@ router.route('/message').post((req, res) => {
             },
             'keyboard': {
               'type': 'buttons',
-              'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+              'buttons': $buttons
             }
           });
         }); 
@@ -307,7 +353,7 @@ router.route('/message').post((req, res) => {
                 },
                 'keyboard': {
                   'type': 'buttons',
-                  'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+                  'buttons': $buttons
                 }
               });
             } else { // 기타 질문 
@@ -324,7 +370,7 @@ router.route('/message').post((req, res) => {
               }, 
               'keyboard': {
                 'type': 'buttons',
-                'buttons': ['급식', '날씨', '버스', '자유채팅', '정보', '개발자']
+                'buttons': $buttons
               }
             });
           }
@@ -336,25 +382,35 @@ router.route('/message').post((req, res) => {
 });
 
 // Express 서버 시작, 포트 지정 
-http.createServer(app).listen(8080, () => {
+http.createServer(app).listen(8080, async () => {
   console.log('Gmmahs KAKAO server start.');
 
-  // 데이터베이스 초기화 
-  db.init();
+  try {
+    // 데이터베이스 초기화 
+    await db.init();
 
-  // 매일 00:00:01 급식데이터 갱신
-  schedule.scheduleJob('1 0 0 * * * *', () => {
-    meal.set();
-  });
+    // 매일 00:00:01 급식데이터 갱신
+    schedule.scheduleJob('1 0 0 * * * *', () => {
+      meal.set();
+    });
 
-  // 매일 14:00:00 급식데이터 갱신 (내일 급식으로)
-  // 점심시간이 지난 후 (2시에 내일 급식으로 갱신)
-  schedule.scheduleJob('0 0 14 * * * *', () => {
-    meal.set(true);
-  });
+    // 매주 토요일 00:00:00에 시간표 데이터 갱신
+    schedule.scheduleJob('0 0 0 * * * 7', () => {
+      timetable.set();
+    });
 
-  // 매 시간마다 날씨데이터 갱신
-  schedule.scheduleJob('0 0 * * * * *', () => {
-    weather.set();  
-  })
+    // 매일 14:00:00 급식데이터 갱신 (내일 급식으로)
+    // 점심시간이 지난 후 (2시에 내일 급식으로 갱신)
+    schedule.scheduleJob('0 0 14 * * * *', () => {
+      meal.set(true);
+    });
+
+    // 매 시간마다 날씨데이터 갱신
+    schedule.scheduleJob('0 0 * * * * *', () => {
+      weather.set();  
+    });
+  } catch(e) {
+    console.log(e);
+    console.log("Database init() failed.");
+  }
 });
