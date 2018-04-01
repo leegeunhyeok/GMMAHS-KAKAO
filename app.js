@@ -17,15 +17,14 @@
 
 const $main = {
   'type': 'buttons',
-  'buttons': ['급식', '시간표', '날씨', '버스', '자유채팅', '정보']
+  'buttons': ['급식', '시간표', '날씨', '버스', '정보']
 };
 
 const $buttons = [
   '급식', 
   '시간표',
   '날씨', 
-  '버스', 
-  '자유채팅', 
+  '버스',
   '정보'
 ];
 
@@ -52,8 +51,8 @@ const weather = require('./src/weather.js');
 // 버스 정보 파싱 모듈
 const bus = require('./src/bus.js'); 
 
-// DialogFlow 모듈
-const dialogflow = require('./src/dialogflow.js');
+// DialogFlow 모듈 (2018-04-01 사용 중단, 추후에 사용할 수 있음)
+//const dialogflow = require('./src/dialogflow.js');
 
 // 익스프레스 객체 
 const app = express();
@@ -141,7 +140,7 @@ router.route('/message').post((req, res) => {
       res.json({
         'message': {
           'text': '시간표 형식을 아래와 같이\n입력해주세요!\n\n' + 
-          '"@학년 @반 @요일 시간표"\n\n[예시] 1학년 1반 월요일 시간표\n\n\n' + 
+          '"@학년 @반 @요일 시간표"\n\n[예시] 1학년 1반 월요일\n\n\n' + 
           '취소하고싶으시면 [처음으로]를\n입력해주세요!'
         }
       });
@@ -171,7 +170,7 @@ router.route('/message').post((req, res) => {
       res.json({
         'message': {
           'text': '버스정류장 이름을 아래와 같이\n입력해주세요!\n\n' + 
-          '"정류장 @@@"\n\n[예시] 정류장 하안사거리\n\n\n' +
+          '"정류장 정류장이름"\n\n[예시] 정류장 하안사거리\n\n\n' +
           '취소하고싶으시면 [처음으로]를\n입력해주세요!'
         }
       });
@@ -228,19 +227,8 @@ router.route('/message').post((req, res) => {
       break;  
     }
 
-    case '자유채팅': {
-      res.json({
-        'message': {
-          'text': '챗봇과 자유롭게 채팅할 수 있는 기능입니다!\n' +
-          '학교에 대해 궁금한것을 물어보거나 여러가지를 물어보세요~\n\n' +
-          '[처음으로] 또는 나가고 싶다고 얘기하면\n대화를 종료합니다.'
-        }
-      });
-      break;
-    }
-
     default: {
-      if($content.match(/^[1-3]학년 [0-9]{1,2}반 [일월화수목금토]요일 시간표/)) { // 시간표 
+      if($content.match(/^[1-3]학년 [0-9]{1,2}반 [일월화수목금토]요일/)) { // 시간표 
         let week = ['일', '월', '화', '수', '목', '금', '토'];
         let grade_idx = $content.search(/^[1-3]학년/);
         let grade_num = $content[grade_idx];
@@ -281,98 +269,13 @@ router.route('/message').post((req, res) => {
           });
         }); 
       } else {  
-        // 정류장을 제외한 기타 문자들은 DialogFlow로 위임
-        dialogflow.sendMessage($content, $user_key, data => {
-          if(data) {
-            let params = data.result.parameters;
-            let intent = data.result.metadata.intentName;
-            let speech = data.result.fulfillment.speech;
-
-            if(intent === 'meal') { // DialogFlow 급식 
-              meal.get((data, err) => {
-                if(err) {
-                  // 에러 발생 시 새로운 급식으로 불러오기 
-                  meal.set();
-                }
-                res.json({
-                  'message': {
-                    'text': '제가 찾은 급식정보에요!\n\n' + data,
-                    'message_button': {
-                      'label': '이번달 급식 확인하기',
-                      'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
-                    }
-                  }
-                });
-              });
-            } else if(intent === 'weather') { // DialogFlow 날씨 
-              weather.get((data, err) => {
-                if(err) {
-                  // 에러 발생 시 새로운 날씨로 불러오기 
-                  weather.set();
-                }
-                res.json({
-                  'message': {
-                    'text': '날씨 정보를 확인해봤어요!\n\n' + data
-                  }
-                });
-              });
-            } else if(intent === 'school_notice') { // DialogFlow 공지사항
-              res.json({
-                'message': {
-                  'text': speech,
-                  'message_button': {
-                    'label': '학교 소식 확인하기',
-                    'url': 'http://www.gmma.hs.kr/wah/main/bbs/board/list.htm?menuCode=68'
-                  }
-                }
-              });
-            } else if(intent === 'school_website') { // DialogFlow 학교 홈페이지 
-              res.json({
-                'message': {
-                  'text': speech,
-                  'message_button': {
-                    'label': '학교 홈페이지',
-                    'url': 'http://www.gmma.hs.kr'
-                  }
-                }
-              });
-            } else if(intent === 'school_student_council') {
-              res.json({
-                'message': {
-                  'text': speech,
-                  'message_button': {
-                    'label': '학생회 페이스북',
-                    'url': 'https://www.facebook.com/gmmahs'
-                  }
-                }
-              });
-            } else if(intent === 'exit') {
-              res.json({
-                'message': {
-                  'text': speech
-                },
-                'keyboard': {
-                  'type': 'buttons',
-                  'buttons': $buttons
-                }
-              });
-            } else { // 기타 질문 
-              res.json({
-                'message': {
-                  'text': speech
-                }
-              });
-            }
-          } else {
-            res.json({
-              'message': {
-                'text': '자유채팅 봇에 문제가 발생했습니다'
-              }, 
-              'keyboard': {
-                'type': 'buttons',
-                'buttons': $buttons
-              }
-            });
+        res.json({
+          'message': {
+            'text': '알 수 없는 명령입니다.\n\n형식과 일치하게 입력해주세요!'
+          }, 
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': $buttons
           }
         });
       }
