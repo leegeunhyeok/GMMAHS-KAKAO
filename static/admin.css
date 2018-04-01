@@ -1,0 +1,8 @@
+#result-top {
+  margin-top: 1.4rem;
+}
+
+#result-text, #result-json {
+  word-break: break-all;
+  background-color: #fff;
+}

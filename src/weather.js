@@ -52,7 +52,7 @@ const set = async () => {
   
     await db.executeQuery('DELETE FROM weather');
     let rows = await db.executeQuery(data.slice(0, -1));
-    if(rows.affectedRows) console.log('Weather data inserted');
+    if(rows.affectedRows) console.log('Weather data changed');
   } catch(e) {
     console.log(e);
   }

@@ -73,6 +73,7 @@ const set = async tomorrow => {
 
     await db.executeQuery("DELETE FROM meal");
     await db.executeQuery(`INSERT INTO meal VALUES ('${dateStr}', '${meal}')`);
+    console.log('Meal data changed');
   } catch(e) {
     console.log(e);
   }

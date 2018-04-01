@@ -54,6 +54,12 @@ const bus = require('./src/bus.js');
 // DialogFlow 모듈 (2018-04-01 사용 중단, 추후에 사용할 수 있음)
 //const dialogflow = require('./src/dialogflow.js');
 
+// 관리자 페이지 라우팅 경로
+const admin = require('./admin/admin.js');
+
+// 파일 입출력 모듈 
+const fs = require('fs');
+
 // 익스프레스 객체 
 const app = express();
 
@@ -61,16 +67,16 @@ const app = express();
 const router = express.Router();
 
 // 미들웨어 사용 설정 
+app.use('/static', express.static('static'));
 app.use(bodyParser.urlencoded({extended: false})); 
 app.use(bodyParser.json());
 app.use(router);
 
 // 개발 테스트용 form 페이지 
 // 실제 서비스중에는 사용 안함
-/*
+
 router.route('/test').get((req, res) => {
-  const fs = require('fs');
-  fs.readFile('./test.html', (err, data) => {
+  fs.readFile('./static/test.html', (err, data) => {
     if(err) {
       console.log(err);
       res.writeHead(200, {'Content-Type': 'text/html'});
@@ -83,7 +89,34 @@ router.route('/test').get((req, res) => {
     res.end();
   });
 });
-*/
+
+// 관리자 전용 페이지 
+router.route(admin.getRoute()).get((req, res) => {
+  fs.readFile('./static/admin.html', (err, data) => {
+    if(err) {
+      console.log(err);
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      res.write(err);
+      res.end();
+      return;
+    }
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.write(data);
+    res.end();
+  });
+});
+
+// 데이터 삭제 
+router.route('/clear').post(async (req, res) => {
+  try {
+    await db.executeQuery('DELETE FROM meal');
+    await db.executeQuery('DELETE FROM timetable');
+    await db.executeQuery('DELETE FROM weather');
+    res.json({'msg':'Success'});
+  } catch(e) {
+    res.json({'msg':'Fail'});
+  }
+});
 
 // 플러스친구 추가 시 보여줄 버튼 목록
 router.route('/keyboard').get((req, res) => { 
@@ -140,7 +173,7 @@ router.route('/message').post((req, res) => {
       res.json({
         'message': {
           'text': '시간표 형식을 아래와 같이\n입력해주세요!\n\n' + 
-          '"@학년 @반 @요일 시간표"\n\n[예시] 1학년 1반 월요일\n\n\n' + 
+          '"학년-반 요일"\n\n[예시] 1-1 월\n\n\n' + 
           '취소하고싶으시면 [처음으로]를\n입력해주세요!'
         }
       });
@@ -228,16 +261,16 @@ router.route('/message').post((req, res) => {
     }
 
     default: {
-      if($content.match(/^[1-3]학년 [0-9]{1,2}반 [일월화수목금토]요일/)) { // 시간표 
+      if($content.match(/^[1-3]-[0-9]{1,2} [일월화수목금토]/)) { // 시간표 
         let week = ['일', '월', '화', '수', '목', '금', '토'];
-        let grade_idx = $content.search(/^[1-3]학년/);
+        let grade_idx = $content.search(/^[1-3]/);
         let grade_num = $content[grade_idx];
-        let class_idx = $content.search(/[0-9]{1,2}반/);
+        let class_idx = $content.search(/-[0-9]{1,2}/)+1;
         let class_num = $content[class_idx];
-        let weekday_idx = $content.search(/[일월화수목금토]요일/);
+        let weekday_idx = $content.search(/[일월화수목금토]/);
         let weekday_num = week.indexOf($content[weekday_idx]);
 
-        if(!($content[class_idx + 1] === '반')) { // 1~9반 제외(반이 2자리수인 경우)
+        if(!($content[class_idx + 1] === ' ')) { // 1~9반 제외(반이 2자리수인 경우)
           class_num += $content[class_idx + 1];
         }
         // 해당 학급의 시간표 데이터 가져오기 
