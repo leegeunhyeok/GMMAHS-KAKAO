@@ -22,7 +22,7 @@ var status = false;
 const set = async () => {
   status = false;
   let data = await new Promise((resolve, reject) => {
-    request('http://comcigan.com:4081/_hourdat?sc=13209', (err, res, body) => {
+    request('http://comcigan.com:4081/_hourdata?sc=13209', (err, res, body) => {
       if(err) {
         reject(err);
       }
