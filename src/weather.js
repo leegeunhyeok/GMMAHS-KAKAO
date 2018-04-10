@@ -69,7 +69,7 @@ const get = async callback => {
       let str = '';
       let pub = ''; // 발표한 시간 
       rows.forEach(i => {
-        str += `[${i.hour > 12 ? '오후':'오전'} ${i.hour > 12 ? 12-i.hour : i.hour}시]\n- 기온: ${i.temp}℃\n- 강수형태: ${$pty[i.pty]}\n- 강수확률: ${i.pop}%, ${i.wfKor}\n- 습도: ${i.reh}%\n\n`;
+        str += `[${i.hour > 12 ? '오후':'오전'} ${i.hour > 12 ? i.hour-12 : i.hour}시]\n- 기온: ${i.temp}℃\n- 강수형태: ${$pty[i.pty]}\n- 강수확률: ${i.pop}%, ${i.wfKor}\n- 습도: ${i.reh}%\n\n`;
         pub = i.pub;
       });
       callback(str + pub + ' 발표\n소하 2동 기준\n(시간은 24시간 형식)', false);
