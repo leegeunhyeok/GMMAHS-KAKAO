@@ -40,3 +40,14 @@
 >   pub TEXT NOT NULL                -- 기상청 발표시간
 > );
 > ```
+
+> ## 일정정보 테이블
+> * 테이블명 : calendar
+> * 설명: 이번달의 학교 일정을 저장
+> ```sql
+> CREATE TABLE calendar (
+>   month INT NOT NULL,            -- 달(m)
+>   day INT NOT NULL.              -- 일(d)
+>   content VARCHAR(50) NOT NULL   -- 일정 내용
+> );
+> ```

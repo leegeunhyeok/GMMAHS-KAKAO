@@ -22,12 +22,16 @@ var status = false;
 const set = async () => {
   status = false;
   let data = await new Promise((resolve, reject) => {
-    request('http://comcigan.com:4081/_hourdata?sc=13209', (err, res, body) => {
+    request('http://comcigan.com:4083/124246?NjE0OF8xMzIwOV8xXzA', (err, res, body) => {
       if(err) {
         reject(err);
       }
-      let data = body.substr(0, body.lastIndexOf('}') + 1);
-      resolve(JSON.parse(data));
+      try {
+        let data = body.substr(0, body.lastIndexOf('}') + 1);
+        resolve(JSON.parse(data)); 
+      } catch(e) { // JSON 파싱 도중 예외가 발생할수도 있음
+        reject(e);
+      }
     });
   });
 
@@ -87,7 +91,7 @@ const get = async (grade, class_, weekday) => {
       console.log(e);
     }
   } else {
-    str = '시간표 데이터를 불러오고 있습니다.\n잠시 후 다시 시도해주세요';
+    str = '시간표 데이터를 불러오고 있습니다.\n잠시 후 다시 시도해주세요\n\n문제가 지속될 경우 문의해주세요';
     set();
   }
   return str;
