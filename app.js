@@ -170,11 +170,9 @@ router.route('/message').post((req, res) => {
   } else if($content === '시간표') {
     res.json({
       'message': {
-        'text': '학년을 선택해주세요!'
-      },
-      'keyboard': {
-        'type': 'buttons',
-        'buttons': ['1학년', '2학년', '3학년']
+        'text': '시간표 형식을 아래와 같이\n입력해주세요!\n\n' + 
+                '"학년-반 요일"\n\n[예시] 1-1 월\n\n\n' + 
+                '취소하고싶으시면 [처음으로]를\n입력해주세요!'
       }
     });
   } else if($content === '학사일정') {
