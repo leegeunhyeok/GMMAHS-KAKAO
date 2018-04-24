@@ -2,15 +2,20 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "sourceMap": true
+    "sourceMap": false
   },
   "files": [
-    "./app.ts"
+    "./main.ts",
+    "./app/app.ts",
+    "./src/bus.ts",
+    "./src/calendar.ts",
+    "./src/database.ts",
+    "./src/meal.ts",
+    "./src/timetable.ts",
+    "./src/weather.ts"
   ],
   "include": [
-    "./src/*",
-    "./admin/*",
-    "./key/*",
-    ""
+    "./admin/*.ts",
+    "./key/*.ts"
   ]
 }
