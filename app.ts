@@ -1,6 +1,8 @@
 /*
 * GMMAHS-KAKAO
 * 
+* ### TypeScript ###
+* 
 * - 광명경영회계고등학교 카카오톡 플러스친구 API 서버
 * - 데이터베이스: MariaDB
 * - 급식정보 제공
@@ -13,6 +15,27 @@
 *
 * MIT license
 * 
+*/
+
+import * as express from 'express'; 
+import * as fs from 'fs'; 
+import * as http from 'http'; 
+import * as bodyParser from 'body-parser'; // HTML Body 데이터 읽기(POST)
+import * as cheerio from 'cheerio'; // HTML 파싱
+import * as schedule from 'node-schedule'; // 스케쥴러 
+
+import * as db from './src/database.js'; // 데이터베이스 작업 모듈 
+import * as meal from './src/meal.js'; // 급식 데이터 파싱 모듈 
+import * as timetable from './src/timetable.js'; // 시간표 파싱 모듈
+import * as calendar from './src/calendar.js'; // 학교 일정 파싱 모듈
+import * as weather from './src/weather.js'; // 날씨 RSS 파싱 모듈 
+import * as bus from './src/bus.js'; // 버스 정보 모듈 
+import * as admin from './admin/admin.js'; // 관리자 페이지 라우팅 경로 
+/*
+
+// DialogFlow 모듈 (2018-04-01 사용 중단, 추후에 사용할 수 있음)
+import * as dialog from './src/dialogflow.js';
+
 */
 
 const $main = {
@@ -29,40 +52,42 @@ const $buttons = [
   '정보'
 ];
 
-const http = require('http'), 
-  express = require('express'), // REST API 서버로 구현
-  bodyParser = require('body-parser'), // HTML Body 데이터 읽기(POST)
-  cheerio = require('cheerio'); // HTML 파싱
+// express 서버 클래스 
+class App {
+  private app: express.Application;
 
-// 스케줄러 모듈 
-const schedule = require('node-schedule'); 
+  public zeroFormat(number: number, length: number) {
+    let zero: string = '';
+    let n :string = number.toString();
 
-// 데이터베이스 작업 모듈 
-const db = require('./src/database.js');
+    if (n.length < length) {
+      for (let i = 0; i < length - n.length; i++)
+        zero += '0';
+    }
+    return zero + n;
+  }
 
-// 급식 데이터 파싱 모듈 
-const meal = require('./src/meal.js');
+  // 2018-04-24:12:00:00.123 형식 문자열 생성 
+  public timeFormatter(): string {
+    const $date: Date = new Date();
+    var str: string = this.zeroFormat($date.getFullYear(), 4) + '-' +
+    this.zeroFormat($date.getMonth() + 1, 2) + '-' +
+    this.zeroFormat($date.getDate(), 2) + ' ' +
+    this.zeroFormat($date.getHours(), 2) + ':' +
+    this.zeroFormat($date.getMinutes(), 2) + ':' +
+    this.zeroFormat($date.getSeconds(), 2) + '.' +
+    $date.getMilliseconds();
+    return str;
+  }
 
-// 시간표 데이터 파싱 모듈
-const timetable = require('./src/timetable.js');
+  public logger(msg: string) {
+    console.log(msg);
+  }
 
-// 이번달 학교 일정 파싱 모듈
-const calendar = require('./src/calendar.js');
-
-// 날씨 RSS 파싱 모듈
-const weather = require('./src/weather.js'); 
-
-// 버스 정보 파싱 모듈
-const bus = require('./src/bus.js'); 
-
-// DialogFlow 모듈 (2018-04-01 사용 중단, 추후에 사용할 수 있음)
-//const dialogflow = require('./src/dialogflow.js');
-
-// 관리자 페이지 라우팅 경로
-const admin = require('./admin/admin.js');
-
-// 파일 입출력 모듈 
-const fs = require('fs');
+  constructor() {
+    this.app = express();
+  }
+}
 
 // 익스프레스 객체 
 const app = express();
