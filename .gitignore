@@ -4,6 +4,8 @@ node_modules/
 key.js
 token.js
 admin.js
+*.js
+*.map
 
 # Editor directories and files
 .idea
