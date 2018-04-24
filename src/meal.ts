@@ -8,16 +8,23 @@
 
 import * as request from 'request';
 import * as cheerio from 'cheerio';
+import DB from './database.js';
 
 class Meal {
   private $url: string = 'https://stu.goe.go.kr/sts_sci_md00_001.do?schulCode=J100000488&schulCrseScCode=4&schulKndScCode=4';
   private $weekStr: Array<string> = ['일', '월', '화', '수', '목', '금', '토'];
-  private db: any = null;
+  private db: DB;
   
-  constructor(database: any) {
+  /* @constructor 
+  *  @typedef {object} DB 데이터베이스 커넥션 객체
+  */
+  constructor(database: DB) {
     this.db = database;
   }
 
+  /* @description 급식 데이터 파싱 후 저장
+  *  @return {Promise}
+  */
   public async set(tomorrow: boolean): Promise<any> {
     try {
       let $body: any = await new Promise((resolve, reject) => {
@@ -75,27 +82,30 @@ class Meal {
   
       await this.db.executeQuery("DELETE FROM meal");
       await this.db.executeQuery(`INSERT INTO meal VALUES ('${dateStr}', '${meal}')`);
-      return 'Meal data changed';
+      return {'msg': 'Meal data changed', 'err': false};
     } catch(e) {
-      return e;
+      return {'msg': 'Meal data set error', 'err': true};
     }
   }
 
-  public async get(callback: Function): Promise<any> {
+  /* @description 날씨 데이터 파싱 후 저장
+  *  @return {Promise}
+  */
+  public async get(): Promise<any> {
     if(this.db) {
       try {
         let rows: any = await this.db.executeQuery('SELECT * FROM meal');
         if(rows.length) {
           let info: string = rows[0].info ? rows[0].info : '급식이 없습니다.';
-          callback(rows[0].date + '\n\n' + info, false);
+          return {'msg': rows[0].date + '\n\n' + info, 'reset': false};
         } else {
-          callback('급식 데이터를 불러오고 있습니다.\n잠시 후 다시 시도해주세요', true);
+          return {'msg': '급식 데이터를 불러오고 있습니다.\n잠시 후 다시 시도해주세요', 'reset': true};
         }
       } catch(e) {
-        callback('데이터베이스 오류', false);
+        return {'msg': '데이터베이스 오류', 'reset': true};
       }
     } else {
-      callback('데이터베이스 커넥션이 존재하지 않습니다.', false);
+      return {'msg': '데이터베이스 커넥션이 존재하지 않습니다.', 'reset': false};
     }
   }
 }

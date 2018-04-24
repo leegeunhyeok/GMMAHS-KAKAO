@@ -8,20 +8,26 @@
 
 import * as request from 'request';
 import * as cheerio from 'cheerio';
+import DB from './database.js';
 
 class Calendar {
   private $url: string = 'https://stu.goe.go.kr/sts_sci_sf00_001.do?schulCode=J100000488&schulCrseScCode=4&schulKndScCode=4'; // 교육청 학사일정
-  private db: any;
+  private check: boolean; // 데이터베이스 세팅 체크(false: 미완료)
+  private db: DB;
 
-  /* @constructor */
-  constructor(database: any) {
+  /* @constructor 
+  *  @typedef {object} DB 데이터베이스 커넥션 객체
+  */
+  constructor(database: DB) {
+    this.check = false;
     this.db = database;
   }
 
   /* @description 이번 달 학사 일정 파싱 후 저장  
-  *  @return {void}
+  *  @return {Promise}
   */
   public async set(): Promise<any> {
+    this.check = false;
     try {
       let $body: any = await new Promise((resolve, reject) => {
         request(this.$url, (err, res, body) => {
@@ -41,7 +47,7 @@ class Calendar {
     
       // 기존 데이터 지우기(비동기)
       await this.db.executeQuery('DELETE FROM calendar'); 
-    
+      let data: Array<any> = [];
       $('tbody > tr').each(function(idx: number) {
         let day: string = $(this).find('th').text().trim();
         let month_count: number = head[1];
@@ -55,15 +61,19 @@ class Calendar {
     
           // 비어있거나 토요휴업일인 일정은 제외
           if($month === month_count && str && str !== '토요휴업일') { 
-            await this.db.executeQuery(`INSERT INTO calendar VALUES (${$month}, ${parseInt(day)}, '${str}')`);
+            data.push({'month': $month, 'day': parseInt(day), 'content': str});
           }
           month_count++;
         });
       });
-      return 'Calendar data changed';
+      
+      for(let d of data) {
+        await this.db.executeQuery(`INSERT INTO calendar VALUES (${d.month}, ${d.day}, '${d.content}')`);
+      }
+      this.check = true;
+      return {'msg': 'Calendar data changed', 'err': false};
     } catch(e) {
-      console.log(e);
-      return e;
+      return {'msg': 'Calendar data change error', 'err': true};
     }
   }
 
@@ -71,19 +81,23 @@ class Calendar {
   *  @return {void}
   */
   public async get(): Promise<any> {
-    try {
-      let str: string = '[이번 달 학사일정]\n\n';
-      let data = await this.db.executeQuery('SELECT * FROM calendar');
-      if(data.length) {
-        for(let i=0; i<data.length; i++) {
-          str += `${data.month}월 ${data.day}일: ${data.content}\n`;
+    if(this.check) {
+      try {
+        let str: string = '[이번 달 학사일정]\n\n';
+        let data = await this.db.executeQuery('SELECT * FROM calendar');
+        if(data.length) {
+          for(let d of data) {
+            str += `${d.month}월 ${d.day}일: ${d.content}\n`;
+          }
+        } else {
+          str += '학사일정이 없습니다.';
         }
-      } else {
-        str += '일정이 없습니다';
+        return {'msg': str, 'reset': false};
+      } catch(e) {
+        return {'msg': '데이터베이스 오류', 'reset': true};
       }
-      return str;
-    } catch(e) {
-      return '데이터베이스 오류';
+    } else {
+      return {'msg': '일정 데이터를 불러오고 있습니다.\n잠시 후 다시 시도해주세요', 'reset': true};
     }
   }
 }

@@ -21,34 +21,43 @@ class Bus {
   private $bus: string = 'http://openapi.gbis.go.kr/ws/rest/busarrivalservice/station?serviceKey='; // stationId 의 정류장에 오는 버스 조회  
   private $route: string = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey='; // 해당 노선의 정보 조회
   private $info: string = 'http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey='; // 버스 정보 조회
-  private API_ERR: string = 'API 서버에 문제가 발생하였습니다\n\n[왜 문제가 발행하나요?]\n- 일일 트래픽 제한 초과\n- 서버 접속 오류\n\n잠시 후 다시 시도하거나\n내일 다시 시도해주세요';
-  private $KEY: string = null; // Open API Key
-  private db: any;
+  private $KEY: string; // Open API Key
+  private $ERR: any = { // 경기버스 에러코드
+    '1': 'API 서버에 시스템 에러가 발생하였습니다.',
+    '2': '필수 요청 파라미터가 존재하지 않습니다.',
+    '3': '필수 요청 파라미터가 잘못되었습니다.',
+    '4': '검색 결과가 존재하지 않습니다.',
+    '5': '인증키가 존재하지 않습니다.',
+    '6': '등록되지 않은 키 입니다.',
+    '7': '사용 중지된 키 입니다.',
+    '8': '요청 제한을 초과하였습니다.',
+    '20': '잘못된 위치로 요청하였습니다.',
+    '21': '노선번호는 1자리 이상 입력하세요',
+    '22': '정류소 명 또는 번호는 2자리 이상 입력하세요',
+    '23': '버스 도착 정보가 존재하지 않습니다.',
+    '31': '존재하지 않는 출발 정류소ID 입니다.',
+    '32': '존재하지 않는 도착 정류소ID 입니다.',
+    '99': 'API 서버 준비 중입니다.'
+  }
 
   /* @constructor */
-  constructor(database: any) {
+  constructor() {
     this.$KEY = require('../key/key.js').getKey();
-    this.db = database;
   }
 
   /* @description 해당 키워드의 정류장 검색 후 도착 버스 정보 조회
   *  @param {string} 검색할 키워드  
-  *  @param {Function} 콜백함수  
   *  @return {void}
   */
-  public search(keyword: string, callback: Function): void {
-    // 키워드에 대한 버스정류장 검색
-    this.getStation(keyword).then((station: Array<any>) => {
-      // 버스정류장에 오는 버스 목록 조회 
-      return this.getBus(station);
-    }).then((result: Array<any>) => {
-      // 버스 목록에 대한 세부 정보 조회 
-      return this.getBusInfo(result);
-    }).then((bus) => {
-      callback(this.process(bus));
-    }).catch((err: any) => {
-      callback(err);
-    });
+  public async search(keyword: string): Promise<any> {
+    try {
+      let stations = await this.getStation(keyword);
+      let buses = await this.getBus(stations);
+      let infos = await this.getBusInfo(buses);
+      return this.process(infos);
+    } catch(err) {
+      return err;
+    }
   }
 
   /* @description 사용자 입력 키워드 기준의 버스 정류장 검색
@@ -64,7 +73,7 @@ class Bus {
       request(url, (err, res, body) => {
         if(err) {
           console.log(err);
-          reject(err);
+          reject('버스 데이터를 불러오는 중 문제가 발생하였습니다.');
         }
         var station: Array<any> = [];
         var $: cheerio = cheerio.load(body);
@@ -76,19 +85,17 @@ class Bus {
               station.push({name: name, id: id});
             }
           });
-    
-          if(station.length === 0) {
-            reject('해당 정류장을 찾을 수 없습니다\n다시 입력해주세요');
-          } else if(station.length > 6) {
+          
+          if(station.length > 6) {
             reject('검색된 정류장이 너무 많습니다\n더 자세하게 입력해주세요\n\n검색된 정류장 수: ' + station.length);
           } else {
             resolve(station);
           }
         } else {
-          reject(this.API_ERR);
+          reject(this.$ERR[parseInt($('resultCode').text())]);
         }
       });
-    }); 
+    });
   }
 
   /* @description 정류장ID에 도착할 예정인 버스 조회
@@ -106,12 +113,10 @@ class Bus {
       for(let i=0; i<stationId.length; i++) {
         $promise[i] = new Promise((resolve, reject) => {
           let url: string = baseUrl + stationId[i].id;
-
           // XML 내려받기 
           request(url, (err, res, body) => {
             if(err) {
-              console.log(err);
-              resolve('');
+              reject('정류장에 도착할 버스를 조회하는 도중 오류가 발생하였습니다.');
             }
 
             // 버스 데이터 저장 배열 
@@ -126,7 +131,7 @@ class Bus {
               });
               resolve(bus);
             } else {
-              reject(this.API_ERR);
+              reject(this.$ERR[parseInt($('resultCode').text())]);
             }
           });
         });
@@ -183,7 +188,7 @@ class Bus {
                 });
                 resolve(bus);
               } else {
-                reject(this.API_ERR);
+                reject(this.$ERR[parseInt($('resultCode').text())]);
               }
             });
           });
@@ -208,7 +213,7 @@ class Bus {
     for(let i=0; i < data.length; i++) {
       let bus: any = data[i][0];
       if(bus.time1) {
-        str += `--[${bus.number}번 버스]--\n${bus.station} 정류장에\n${bus.time1}분 후 도착합니다.\n다음 버스는 ${bus.time2 ? bus.time2 + '분 후 도착합니다.' : '없습니다'}\n---------------\n\n`;
+        str += `[${bus.number}번 버스]\n${bus.station} 정류장에\n${bus.time1}분 후 도착합니다.\n다음 버스는 ${bus.time2 ? bus.time2 + '분 후 도착합니다.' : '없습니다'}\n\n\n`;
       }
     }
     return str;

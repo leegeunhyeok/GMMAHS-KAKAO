@@ -6,14 +6,18 @@
 */
 
 import * as request from 'request';
+import DB from './database.js';
 
 class Timetable {
-  private status: boolean = false;
-  private db: any;
+  private status: boolean;
+  private db: DB;
 
-  /* @constructor */
-  constructor(database: any) {
+  /* @constructor 
+  *  @typedef {object} DB 데이터베이스 커넥션 객체
+  */
+  constructor(database: DB) {
     this.db = database;
+    this.status = false;
   }
 
   /* @description 00 형식으로 변환 후 문자열 반환
@@ -29,52 +33,56 @@ class Timetable {
   *  @return {Promise}
   */
   public async set(): Promise<any> {
-    this.status = false;
-    let data: any = await new Promise((resolve, reject) => {
-      request('http://comcigan.com:4083/124246?NjE0OF8xMzIwOV8xXzA', (err, res, body) => {
-        if(err) {
-          reject(err);
-        }
-        try {
-          let data: string = body.substr(0, body.lastIndexOf('}') + 1);
-          resolve(JSON.parse(data)); 
-        } catch(e) { // JSON 파싱 도중 예외가 발생할수도 있음
-          reject(e);
-        }
+    try {
+      this.status = false;
+      let data: any = await new Promise((resolve, reject) => {
+        request('http://comcigan.com:4083/124246?NjE0OF8xMzIwOV8xXzA', (err, res, body) => {
+          if(err) {
+            reject(err);
+          }
+          try {
+            let data: string = body.substr(0, body.lastIndexOf('}') + 1);
+            resolve(JSON.parse(data)); 
+          } catch(e) { // JSON 파싱 도중 예외가 발생할수도 있음
+            reject(e);
+          }
+        });
       });
-    });
 
-    let class_count: Array<number> = data['학급수'];
-    let teacher: Array<string> = data['성명'];
-    let subject: Array<string> = data['긴과목명'];
-    let time_table: Array<any> = data['시간표'];
-    let time: Array<any> = data['요일별시수'];
-    await this.db.executeQuery('DELETE FROM timetable');
-    var sql: string = 'INSERT INTO timetable VALUES ';
-    for(let grade=1; grade<=3; grade++) { // 1 ~ 3 학년 
-      for(let class_=1; class_<=class_count[grade]; class_++) { // 해당 학년의 반 수
-        let temp_time_table = time_table[grade][class_]; // *학년 *반의 시간표 임시 저장
-        for(let weekday=1; weekday<=5; weekday++) { // 월(1) ~ 금(5)
-          for(let t=1; t<=time[grade][weekday]; t++) { // 1 ~ n교시
-            let code: string = temp_time_table[weekday][t].toString();
-            let techer_code: number;
-            let subject_code: number;
-            
-            if(code.length == 3) {
-              techer_code = parseInt(this.fillZero(code.substr(0, 1)));
-              subject_code = parseInt(this.fillZero(code.substr(1, 2)));
-            } else {
-              techer_code = parseInt(this.fillZero(code.substr(0, 2)));
-              subject_code = parseInt(this.fillZero(code.substr(2, 2)));
+      let class_count: Array<number> = data['학급수'];
+      let teacher: Array<string> = data['성명'];
+      let subject: Array<string> = data['긴과목명'];
+      let time_table: Array<any> = data['시간표'];
+      let time: Array<any> = data['요일별시수'];
+      await this.db.executeQuery('DELETE FROM timetable');
+      var sql: string = 'INSERT INTO timetable VALUES ';
+      for(let grade=1; grade<=3; grade++) { // 1 ~ 3 학년 
+        for(let class_=1; class_<=class_count[grade]; class_++) { // 해당 학년의 반 수
+          let temp_time_table = time_table[grade][class_]; // *학년 *반의 시간표 임시 저장
+          for(let weekday=1; weekday<=5; weekday++) { // 월(1) ~ 금(5)
+            for(let t=1; t<=time[grade][weekday]; t++) { // 1 ~ n교시
+              let code: string = temp_time_table[weekday][t].toString();
+              let techer_code: number;
+              let subject_code: number;
+              
+              if(code.length == 3) {
+                techer_code = parseInt(this.fillZero(code.substr(0, 1)));
+                subject_code = parseInt(this.fillZero(code.substr(1, 2)));
+              } else {
+                techer_code = parseInt(this.fillZero(code.substr(0, 2)));
+                subject_code = parseInt(this.fillZero(code.substr(2, 2)));
+              }
+              sql += `(${grade}, ${class_}, ${weekday}, ${t}, ${code}, '${teacher[techer_code]}', '${subject[subject_code].replace(/_/g, '')}'), `;
             }
-            sql += `(${grade}, ${class_}, ${weekday}, ${t}, ${code}, '${teacher[techer_code]}', '${subject[subject_code].replace(/_/g, '')}'), `;
           }
         }
       }
+      await this.db.executeQuery(sql.slice(0, -2));
+      this.status = true;
+      return {'msg': 'Timetable data changed', 'err': false};
+    } catch(e) {
+      return {'msg': 'Timetable data set error', 'err': true};
     }
-    await this.db.executeQuery(sql.slice(0, -2));
-    this.status = true;
-    return 'Timetable data changed';
   }
 
   /* @description 해당 학급의 데이터 조회

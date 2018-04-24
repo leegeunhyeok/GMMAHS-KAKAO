@@ -9,7 +9,7 @@
 import * as mysql from 'mysql2';
 
 class Database {
-  private db: any = null;
+  private db: any;
 
   /* @description 데이터베이스 커넥션 생성
   *  @param {string} 호스트
@@ -29,7 +29,7 @@ class Database {
           password: password,
           database: database
         });
-        resolve('Create database connection');
+        resolve('Created database connection');
       } catch(e) {
         reject(e);
       }

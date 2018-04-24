@@ -8,13 +8,16 @@
 
 import * as request from 'request';
 import * as cheerio from 'cheerio';
+import DB from './database.js';
 
 class Weather {
   private $url = 'http://www.weather.go.kr/wid/queryDFSRSS.jsp?zone=4121065000';
-  private db: any = null;
+  private db: DB;
 
-  /* constructor */
-  constructor(database: any) {
+  /* @constructor 
+  *  @typedef {object} DB 데이터베이스 커넥션 객체
+  */
+  constructor(database: DB) {
     this.db = database;
   }
 
@@ -51,27 +54,23 @@ class Weather {
       });
     
       let data: string = 'INSERT INTO weather VALUES ';
-      weather.forEach(i => {
+      weather.forEach((i: any) => {
         data += `(${i.index},${i.hour},${i.temp},${i.pty},${i.pop},'${i.wfKor}',${i.reh},'${i.pub}'),`;
       });
     
       await this.db.executeQuery('DELETE FROM weather');
       let rows = await this.db.executeQuery(data.slice(0, -1));
-      if(rows.affectedRows) {
-        return 'Weather data changed'; 
-      } else {
-        return 'Weather data change error';
-      }
+      return {'msg': 'Weather data changed', 'err': false}; 
     } catch(e) {
-      return e;
+      return {'msg': 'Weather data set error', 'err': true};
     }
   }
 
-  public async get(callback: Function): Promise<any> {
+  public async get(): Promise<any> {
     try {
       let rows: any = await this.db.executeQuery('SELECT * FROM weather');
       if(!rows.length) {
-        callback('날씨 데이터가 없습니다.\n잠시 후 다시 시도해주세요', true);
+        return {'msg': '날씨 데이터가 없습니다.\n잠시 후 다시 시도해주세요', 'reset': true};
       } else {
         const $pty: Array<string> = ['없음', '비', '비와 눈', '눈'];
         let str: string = '';
@@ -80,11 +79,10 @@ class Weather {
           str += `[${i.hour > 12 ? '오후':'오전'} ${i.hour > 12 ? i.hour-12 : i.hour}시]\n- 기온: ${i.temp}℃\n- 강수형태: ${$pty[i.pty]}\n- 강수확률: ${i.pop}%, ${i.wfKor}\n- 습도: ${i.reh}%\n\n`;
           pub = i.pub;
         });
-        callback(str + pub + ' 발표\n소하 2동 기준\n(시간은 24시간 형식)', false);
+        return {'msg': str + pub + ' 발표\n소하2동 날씨', 'reset': false};
       }
     } catch(e) {
-      console.log(e);
-      callback('서버에 문제가 발생하였습니다.', false);
+      return {'msg': '서버에 문제가 발생하였습니다', 'reset': true};
     }
   }
 }

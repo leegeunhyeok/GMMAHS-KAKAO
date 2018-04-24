@@ -53,20 +53,28 @@ const $buttons: Array<string> = [
 
 // express 서버 클래스 
 class App {
-  private app: express.Application = null;
-  private router: express.Router = null;
-  private db: Database = null;
-  private port: number = 0;
-  private meal: Meal = null;
-  private calendar: Calendar = null;
-  private timetable: Timetable = null;
-  private weather: Weather = null;
-  private bus: Bus = null;
+  private app: express.Application;
+  private router: express.Router;
+  private db: Database;
+  private port: number;
+  private meal: Meal;
+  private calendar: Calendar;
+  private timetable: Timetable;
+  private weather: Weather;
+  private bus: Bus;
+  private level: any = [
+    ['[debug]', '\x1b[37m'], // White 0
+    ['[info]', '\x1b[32m'], // Green 1 
+    ['[notice]', '\x1b[36m'], // Cyan 2
+    ['[warning]', '\x1b[33m'], // Yellow 3
+    ['[error]', '\x1b[31m'], // Red 4
+    ['[danger]', '\x1b[31m'] // Red 5
+  ]
 
   /* @constructor */
   constructor() {
     this.app = express();
-    this.logger('Created express object');
+    this.logger('Created express object', 1);
   }
 
   /* @description length에 해당하는 길이만큼 0을 채워서 반환
@@ -95,7 +103,7 @@ class App {
     this.zeroFormat($date.getHours(), 2) + ':' +
     this.zeroFormat($date.getMinutes(), 2) + ':' +
     this.zeroFormat($date.getSeconds(), 2) + '.' +
-    $date.getMilliseconds();
+    this.zeroFormat($date.getMilliseconds(), 3);
     return str;
   }
 
@@ -103,8 +111,14 @@ class App {
   *  @param {string} 출력할 메시지
   *  @return {void}
   */ 
-  public logger(msg: string): void {
-    console.log(`[${this.timeFormatter()}] ${msg}`);
+  public logger(msg: string, level: number): void {
+    let lv: Array<string>;
+    if(this.level[level] === undefined) {
+      lv = this.level[1];
+    } else {
+      lv = this.level[level];
+    }
+    console.log(this.timeFormatter(), lv[1], lv[0], '\x1b[0m', msg);
   }
 
   /* @description Express 라우팅 설정
@@ -168,14 +182,10 @@ class App {
           }
         });
       } else if($content === '급식') {
-        this.meal.get(async (data, err) => {
-          if(err) {
-            // 에러 발생 시 새로운 급식으로 불러오기 
-            this.logger(await this.meal.set(false));
-          }
+        this.meal.get().then((result: any) => {
           res.json({
             'message': {
-              'text': data,
+              'text': result.msg,
               'message_button': {
                 'label': '이번달 급식 확인하기',
                 'url': 'http://www.gmma.hs.kr/wah/main/schoolmeal/calendar.htm?menuCode=102'
@@ -186,6 +196,12 @@ class App {
               'buttons': $buttons
             }
           });
+          
+          if(result.reset) {
+            this.meal.set(false).then((result: any) => {
+              this.logger(result.msg, result.err ? 4 : 1);
+            });
+          }
         });
       } else if($content === '시간표') {
         res.json({
@@ -196,32 +212,40 @@ class App {
           }
         });
       } else if($content === '학사일정') {
-        this.calendar.get().then(msg => {
+        this.calendar.get().then((result: any) => {
           res.json({
             'message': {
-              'text': msg
+              'text': result.msg
             },
             'keyboard': {
               'type': 'buttons',
               'buttons': $buttons
             }
           });
+
+          if(result.reset) {
+            this.calendar.set().then((result: any) => {
+              this.logger(result.msg, result.err ? 4 : 1);
+            });
+          }
         });
       } else if($content === '날씨') {
-        this.weather.get(async (data: string, err: any) => {
-          if(err) {
-            // 에러 발생 시 새로운 날씨로 불러오기 
-            this.logger(await this.weather.set());
-          }
+        this.weather.get().then((result: any) => {
           res.json({
             'message': {
-              'text': data
+              'text': result.msg
             },
             'keyboard': {
               'type': 'buttons',
               'buttons': $buttons
             }
           });
+
+          if(result.reset) {
+            this.weather.set().then((result: any) => {
+              this.logger(result.msg, result.err ? 4 : 1);
+            });
+          }
         });
       } else if($content === '버스') {
         res.json({
@@ -299,9 +323,9 @@ class App {
       } else if($content.match(/^정류장 /)) { // 사용자 입력 데이터에 정류장이라는 단어가 있는지 확인 
         // 맨 앞의 정류장 문자와 공백을 기준으로 나눔
         // 예) 정류장 하안사거리 => ['', '하안사거리']
-        var msg: Array<string> = $content.split(/^정류장 /); 
+        let msg: string = $content.split(/^정류장 /)[1]; 
         // 입력한 버스정류장을 OpenAPI 에서 검색 
-        this.bus.search(msg[1], (result: string) => { 
+        this.bus.search(msg).then(result => {
           res.json({
             'message': {
               'text': result
@@ -311,7 +335,7 @@ class App {
               'buttons': $buttons
             }
           });
-        }); 
+        });
       } else {
         res.json({
           'message': {
@@ -335,7 +359,7 @@ class App {
     this.app.use(bodyParser.urlencoded({extended: false})); 
     this.app.use(bodyParser.json());
     this.app.use(this.router);
-    this.logger('Express middleware initialization completed');
+    this.logger('Express middleware initialization completed', 1);
   }
   
 
@@ -346,17 +370,18 @@ class App {
   public async init(port: number): Promise<any> {
     try {
       this.db = await new Database(); // 데이터베이스 초기화 
-      this.logger(await this.db.init('localhost', 3306, 'root', '1234', 'gmmahs'));
+      this.logger(await this.db.init('localhost', 3306, 'root', '1234', 'gmmahs'), 1);
       this.initRouter();
       this.initMiddleware();
       this.meal = new Meal(this.db);
       this.calendar = new Calendar(this.db);
       this.timetable = new Timetable(this.db);
       this.weather = new Weather(this.db);
+      this.bus = new Bus();
       this.port = port;
-      this.logger(`Server initialization complated [Server port: ${this.port}]`);
+      this.logger(`Server initialization complated [Server port: ${this.port}]`, 1);
     } catch(e) {
-      this.logger('Application initialization error');
+      this.logger('Application initialization error', 4);
     } finally {
       return;
     }
@@ -368,59 +393,52 @@ class App {
   public start(): void {
     // Express 서버 시작, 포트 지정 
     http.createServer(this.app).listen(this.port, async () => {
-      this.logger('Gmmahs KAKAO server started');
+      this.logger('Gmmahs KAKAO server started', 1);
       try {
-        
         // 서버 실행 후 데이터 세팅 
         try {
-          this.logger(await this.meal.set(false));
-          //this.logger(await this.calendar.set());
-          this.logger(await this.weather.set());
-          this.logger(await this.timetable.set());
+          let log: Array<any> = [];
+          log.push(await this.meal.set(false));
+          log.push(await this.calendar.set());
+          log.push(await this.weather.set());
+          log.push(await this.timetable.set());
+          for(let l of log) {
+            this.logger(l.msg, l.err ? 4 : 1);
+          }
         } catch(e) {
-          this.logger(e);
+          this.logger(e, 4);
         }
 
         // 매일 00:00:01 급식데이터 및 이번달 일정 데이터 갱신
         schedule.scheduleJob('1 0 0 * * * *', async (): Promise<any> => {
-          this.logger(await this.meal.set(false));
-          this.logger(await this.calendar.set());
+          this.logger(await this.meal.set(false), 1);
+          this.logger(await this.calendar.set(), 1);
         });
 
         // 매주 토요일 00:00:00에 시간표 데이터 갱신
         schedule.scheduleJob('0 0 0 * * * 7', (): void => {
-          try {
-            this.timetable.set().then((result) => {
-          
-            }).catch((e) => {
-            
-            });
-          } catch(e) {
-            this.logger(e);
-          }
+          this.timetable.set().then((result: any) => {
+            this.logger(result.msg, result.err ? 4 : 1);
+          });
         });
 
         // 매일 14:00:00 급식데이터 갱신 (내일 급식으로)
         // 점심시간이 지난 후 (2시에 내일 급식으로 갱신)
         schedule.scheduleJob('0 0 14 * * * *', (): void => {
-          this.meal.set(true).then((result) => {
-          
-          }).catch((e) => {
-          
+          this.meal.set(true).then((result: any) => {
+            this.logger(result.msg, result.err ? 4 : 1);
           });
         });
 
         // 매 시간마다 날씨데이터 갱신
         schedule.scheduleJob('0 0 * * * * *', (): void => {
-          this.weather.set().then((result) => {
-          
-          }).catch((e) => {
-          
-          }); 
+          this.weather.set().then((result: any) => {
+            this.logger(result.msg, result.err ? 4 : 1);
+          });
         });
       } catch(e) {
+        this.logger("Database init() failed.", 4);
         console.log(e);
-        this.logger("Database init() failed.");
       }
     });
   }

@@ -20,6 +20,8 @@
               data: {'content': msg, 'user_key': key},
               dataType: 'json',
               success: function(data){
+                $('#result-text').html('');
+                $('#result-json').html('');
                 $('#result-text').html(data.message.text);
                 $('#result-json').append(document.createTextNode(JSON.stringify(data, null, 2)));
               }
