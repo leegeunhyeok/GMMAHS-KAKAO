@@ -1,6 +1,10 @@
 # GMMAHS-KAKAO
+
+개발환경: Visual Studio Code + TypeScript + Node.js
+
 [광명경영회계고등학교 플러스친구](http://pf.kakao.com/_DWMsC)
 ![](./kakao.png)
+
 
 > 카카오 플러스친구 ID : <b>gmmahs</b>
 
