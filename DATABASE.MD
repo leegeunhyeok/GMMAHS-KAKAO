@@ -47,7 +47,7 @@
 > ```sql
 > CREATE TABLE calendar (
 >   month INT NOT NULL,            -- 달(m)
->   day INT NOT NULL.              -- 일(d)
+>   day INT NOT NULL,              -- 일(d)
 >   content VARCHAR(50) NOT NULL   -- 일정 내용
 > );
 > ```
