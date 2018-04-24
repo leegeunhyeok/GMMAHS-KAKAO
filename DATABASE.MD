@@ -29,14 +29,14 @@
 > * 테이블명 : weather
 > * 설명: 시간, 온도, 강수상태, 강수확률, 날씨, 습도, 정보발표시간 저장
 > ```sql
-> CREATE TABLE timetable (
+> CREATE TABLE weather (
 >   _index INT NOT NULL PRIMARY KEY, -- 순번
 >   hour INT NOT NULL,               -- 시간
 >   temp DOUBLE NOT NULL,            -- 기온(섭씨)
 >   pty INT NOT NULL,                -- 강수상태(0: 없음, 1: 비, 2: 비/눈, 3: 눈)
 >   pop INT NOT NULL,                -- 강수확률(%)
 >   wfKor TEXT NOT NULL,             -- 날씨(맑음, 흐림 등)
->   reh INT NOT NULL.                -- 습도(%)
+>   reh INT NOT NULL,                -- 습도(%)
 >   pub TEXT NOT NULL                -- 기상청 발표시간
 > );
 > ```
