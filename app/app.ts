@@ -23,6 +23,7 @@ import * as http from 'http';
 import * as bodyParser from 'body-parser'; // HTML Body 데이터 읽기(POST)
 import * as cheerio from 'cheerio'; // HTML 파싱
 import * as schedule from 'node-schedule'; // 스케쥴러 
+import * as school from 'node-school-kr'; // 학교 급식, 학사일정 파싱
 import * as admin from '../admin/admin.js'; // 관리자 페이지 라우팅 경로
 import Weather from '../src/weather.js'; // 날씨 RSS 파싱 모듈
 import Timetable from '../src/timetable.js'; // 시간표 파싱 모듈
@@ -39,7 +40,7 @@ import DialogFlow from '../src/dialogflow.js';
 
 const $main: any = {
   'type': 'buttons',
-  'buttons': ['급식', '시간표', '학사일정', '날씨', '버스', '정보']
+  'buttons': ['급식', '시간표', '학사일정', '날씨', '버스', '통계', '정보']
 };
 
 const $buttons: Array<string> = [
@@ -48,6 +49,7 @@ const $buttons: Array<string> = [
   '학사일정',
   '날씨', 
   '버스',
+  '통계',
   '정보'
 ];
 
@@ -56,6 +58,7 @@ class App {
   private app: express.Application;
   private router: express.Router;
   private db: Database;
+  private school: school;
   private port: number;
   private meal: Meal;
   private calendar: Calendar;
@@ -74,6 +77,7 @@ class App {
   /* @constructor */
   constructor() {
     this.app = express();
+    this.school = new school();
     this.logger('Created express object', 1);
   }
 
@@ -255,6 +259,16 @@ class App {
             '취소하고싶으시면 [처음으로]를\n입력해주세요!'
           }
         });
+      } else if($content === '통계') {
+        res.json({
+          'message': {
+            'text': '통계 기능입니다!\n\n'
+          },
+          'keyboard': {
+            'type': 'buttons',
+            'buttons': ['처음으로']
+          }
+        });
       } else if($content === '정보') {
         res.json({
           'message': {
@@ -373,8 +387,9 @@ class App {
       this.logger(await this.db.init('localhost', 3306, 'root', '1234', 'gmmahs'), 1);
       this.initRouter();
       this.initMiddleware();
-      this.meal = new Meal(this.db);
-      this.calendar = new Calendar(this.db);
+      this.school.init(this.school.eduType.high, this.school.region.gyeonggi, 'J100000488'); // 학교 정보: 광명경영회계고등학교로 초기화
+      this.meal = new Meal(this.db, this.school);
+      this.calendar = new Calendar(this.db, this.school);
       this.timetable = new Timetable(this.db);
       this.weather = new Weather(this.db);
       this.bus = new Bus();

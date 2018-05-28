@@ -6,21 +6,23 @@
 *
 */
 
-import * as request from 'request';
-import * as cheerio from 'cheerio';
-import DB from './database.js';
+import school from 'node-school-kr';
+import Database from './database.js';
 
 class Calendar {
   private $url: string = 'https://stu.goe.go.kr/sts_sci_sf00_001.do?schulCode=J100000488&schulCrseScCode=4&schulKndScCode=4'; // 교육청 학사일정
   private check: boolean; // 데이터베이스 세팅 체크(false: 미완료)
-  private db: DB;
+  private db: Database;
+  private school: school;
 
   /* @constructor 
   *  @typedef {object} DB 데이터베이스 커넥션 객체
+  *  @typedef {object} School 파싱 모듈 인스턴스
   */
-  constructor(database: DB) {
+  constructor(database: Database, school: school) {
     this.check = false;
     this.db = database;
+    this.school = school;
   }
 
   /* @description 이번 달 학사 일정 파싱 후 저장  
@@ -29,47 +31,14 @@ class Calendar {
   public async set(): Promise<any> {
     this.check = false;
     try {
-      let $body: any = await new Promise((resolve, reject) => {
-        request(this.$url, (err, res, body) => {
-          if(err) {
-            reject(err);
-          }
-          resolve(body);
-        });
-      });
-    
-      let $: cheerio = cheerio.load($body, {decodeEntities: false});
-      let head: Array<number> = [];
-      let $month: number = new Date().getMonth() + 1; // 이번달 
-      $('thead > tr > th').each(function(idx) {
-        head.push(parseInt($(this).text().replace('월', '')));
-      });
-    
-      // 기존 데이터 지우기(비동기)
-      await this.db.executeQuery('DELETE FROM calendar'); 
-      let data: Array<any> = [];
-      $('tbody > tr').each(function(idx: number) {
-        let day: string = $(this).find('th').text().trim();
-        let month_count: number = head[1];
-        // 해당 콜백 함수 내에서 db 비동기 작업을 해야 하므로 async 함수로 선언
-        $(this).find('td.textL').each(async function(idx: number) {  
-          let str: string = ''; // 학사일정 string 임시 저장 변수 
-          $(this).find('span').each(function(idx: number) {
-            str += $(this).text().trim() + ','; // 불필요한 공백문자 제거 및 구문문자(,) 추가
-          });
-          str = str.slice(0, -1); // 마지막 , 문자 제거 
-    
-          // 비어있거나 토요휴업일인 일정은 제외
-          if($month === month_count && str && str !== '토요휴업일') { 
-            data.push({'month': $month, 'day': parseInt(day), 'content': str});
-          }
-          month_count++;
-        });
-      });
-      
-      for(let d of data) {
-        await this.db.executeQuery(`INSERT INTO calendar VALUES (${d.month}, ${d.day}, '${d.content}')`);
+      let result = await this.school.getNotice(); // 이번 달 학사일정 파싱
+      await this.db.executeQuery('DELETE FROM calendar');
+      for(let i=1; i <= 31; i++) {
+        if(result[i]) {
+          await this.db.executeQuery(`INSERT INTO calendar VALUES (${result.month}, ${i}, '${result[i]}')`);
+        }
       }
+    
       this.check = true;
       return {'msg': 'Calendar data changed', 'err': false};
     } catch(e) {
