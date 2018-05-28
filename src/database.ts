@@ -42,15 +42,19 @@ class Database {
   */
   public async executeQuery(sql: string): Promise<any> {
     if(this.db) {
-      let result: any = await new Promise((resolve, reject) => {
-        this.db.query(sql, (err, rows) => {
-          if(err) {
-            reject(err);
-          } 
-          resolve(rows);
+      try {
+        let result: any = await new Promise((resolve, reject) => {
+          this.db.query(sql, (err, rows) => {
+            if(err) {
+              reject(err);
+            } 
+            resolve(rows);
+          });
         });
-      });
-      return result;
+        return result;
+      } catch(e) {
+        return 'Database executeQuery() Error.';
+      }
     } else { // db 커넥션 생성하지 않았을 경우(init 함수 미 호출)
       return 'Database init() execute please.'
     }

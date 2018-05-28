@@ -51,3 +51,17 @@
 >   content VARCHAR(50) NOT NULL   -- 일정 내용
 > );
 > ```
+
+> ## 통계 테이블
+> * 테이블명: statistics
+> * 설명: 메뉴 사용 통계저장
+> ```sql
+> CREATE TABLE statistics (
+>   meal INT DEFAULT 0,         -- 급식 메뉴 사용인원
+>   timetable INT DEFAULT 0,    -- 시간표 메뉴 사용인원
+>   calendar INT DEFAULT 0,     -- 학사일정 메뉴 사용인원
+>   weather INT DEFAULT 0,      -- 날씨 메뉴 사용인원
+>   bus INT DEFAULT 0,          -- 버스 메뉴 사용 인원
+>   other INT DEFAULT 0         -- 기타 메뉴 사용 인원
+> );
+> ```

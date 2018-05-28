@@ -93,7 +93,7 @@ class Timetable {
   */
   public async get(grade: any, class_: any, weekday: any): Promise<any> {
     var str: string = '';
-    if(status) {
+    if(this.status) {
       const weekdayStr: Array<string> = ['일', '월', '화', '수', '목', '금', '토'];
       str = `${grade}학년 ${class_}반 ${weekdayStr[weekday]}요일 시간표\n\n`;
       try {

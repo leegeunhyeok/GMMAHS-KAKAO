@@ -31,6 +31,7 @@ import Meal from '../src/meal.js'; // 급식 데이터 파싱 모듈
 import Calendar from '../src/calendar.js'; // 학교 일정 파싱 모듈 
 import Bus from '../src/bus.js'; // 버스 정보 모듈 
 import Database from '../src/database.js'; // 데이터베이스 작업 모듈
+import Statistics from '../src/statistics.js'; // 통계 모듈
 /*
 
 // DialogFlow 모듈 (2018-04-01 사용 중단, 추후에 사용할 수 있음)
@@ -65,6 +66,7 @@ class App {
   private timetable: Timetable;
   private weather: Weather;
   private bus: Bus;
+  private statistics: Statistics;
   private level: any = [
     ['[debug]', '\x1b[37m'], // White 0
     ['[info]', '\x1b[32m'], // Green 1 
@@ -155,6 +157,8 @@ class App {
         await this.db.executeQuery('DELETE FROM calendar');
         await this.db.executeQuery('DELETE FROM timetable');
         await this.db.executeQuery('DELETE FROM weather');
+        await this.statistics.reset();
+        await this.statistics.addFirstData();
         res.json({'msg':'Success'});
       } catch(e) {
         res.json({'msg':'Fail'});
@@ -167,7 +171,7 @@ class App {
     });
 
     // 사용자가 메시지를 전송하면 응답 
-    router.route('/message').post((req: express.Request, res: express.Response): void => {
+    router.route('/message').post(async (req: express.Request, res: express.Response): Promise<any> => {
       // 사용자가 입력한 텍스트 데이터 
       const $content: any = req.body.content; 
 
@@ -186,6 +190,7 @@ class App {
           }
         });
       } else if($content === '급식') {
+        await this.db.executeQuery('UPDATE statistics SET meal = meal + 1');
         this.meal.get().then((result: any) => {
           res.json({
             'message': {
@@ -208,6 +213,7 @@ class App {
           }
         });
       } else if($content === '시간표') {
+        await this.db.executeQuery('UPDATE statistics SET timetable = timetable + 1');
         res.json({
           'message': {
             'text': '시간표 형식을 아래와 같이\n입력해주세요!\n\n' + 
@@ -216,6 +222,7 @@ class App {
           }
         });
       } else if($content === '학사일정') {
+        await this.db.executeQuery('UPDATE statistics SET calendar = calendar + 1');
         this.calendar.get().then((result: any) => {
           res.json({
             'message': {
@@ -234,6 +241,7 @@ class App {
           }
         });
       } else if($content === '날씨') {
+        await this.db.executeQuery('UPDATE statistics SET weather = weather + 1');
         this.weather.get().then((result: any) => {
           res.json({
             'message': {
@@ -252,6 +260,7 @@ class App {
           }
         });
       } else if($content === '버스') {
+        await this.db.executeQuery('UPDATE statistics SET bus = bus + 1');
         res.json({
           'message': {
             'text': '버스정류장 이름을 아래와 같이\n입력해주세요!\n\n' + 
@@ -260,9 +269,11 @@ class App {
           }
         });
       } else if($content === '통계') {
+        await this.db.executeQuery('UPDATE statistics SET other = other + 1');
+        let result = await this.statistics.getStatistics();
         res.json({
           'message': {
-            'text': '통계 기능입니다!\n\n'
+            'text': '여러분들이 사용하는 메뉴들의\n사용량 통계입니다!\n\n' + result + '\n기간: 서버 가동 후 ~ 현재'
           },
           'keyboard': {
             'type': 'buttons',
@@ -270,6 +281,7 @@ class App {
           }
         });
       } else if($content === '정보') {
+        await this.db.executeQuery('UPDATE statistics SET other = other + 1');
         res.json({
           'message': {
             'text': '광명경영회계고등학교 정보제공\n서비스입니다!\n\n' +
@@ -393,6 +405,9 @@ class App {
       this.timetable = new Timetable(this.db);
       this.weather = new Weather(this.db);
       this.bus = new Bus();
+      this.statistics = new Statistics(this.db);
+      this.statistics.reset();
+      this.statistics.addFirstData();
       this.port = port;
       this.logger(`Server initialization complated [Server port: ${this.port}]`, 1);
     } catch(e) {
