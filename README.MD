@@ -1,3 +1,11 @@
+<div align="center">
+  
+  ![](./kakao.png)
+  
+  [광명경영회계고등학교 플러스친구](http://pf.kakao.com/_DWMsC)
+  
+</div>
+
 # GMMAHS-KAKAO
 
 > ## 개발환경
@@ -7,9 +15,6 @@
 > tsc -p "tsconfig.json"
 > ```
 > - 코드의 무단 사용을 금지합니다(복붙 등)
-
-[광명경영회계고등학교 플러스친구](http://pf.kakao.com/_DWMsC)
-![](./kakao.png)
 
 
 > 카카오 플러스친구 ID : <b>gmmahs</b>
