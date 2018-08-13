@@ -61,7 +61,7 @@ class Meal {
       await this.db.executeQuery(`INSERT INTO meal VALUES ('${dateStr}', '${result[$day]}')`);
       return {'msg': 'Meal data changed', 'err': false};
     } catch(e) {
-      return {'msg': 'Meal data set error', 'err': true};
+      return {'msg': 'Meal data set error: ' + e, 'err': true};
     }
   }
 

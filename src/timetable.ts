@@ -81,7 +81,7 @@ class Timetable {
       this.status = true;
       return {'msg': 'Timetable data changed', 'err': false};
     } catch(e) {
-      return {'msg': 'Timetable data set error', 'err': true};
+      return {'msg': 'Timetable data set error: ' + e, 'err': true};
     }
   }
 

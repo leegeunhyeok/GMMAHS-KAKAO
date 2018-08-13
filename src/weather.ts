@@ -62,7 +62,7 @@ class Weather {
       let rows = await this.db.executeQuery(data.slice(0, -1));
       return {'msg': 'Weather data changed', 'err': false}; 
     } catch(e) {
-      return {'msg': 'Weather data set error', 'err': true};
+      return {'msg': 'Weather data set error: ' + e, 'err': true};
     }
   }
 

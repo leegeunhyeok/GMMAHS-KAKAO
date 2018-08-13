@@ -29,7 +29,12 @@ class Database {
           password: password,
           database: database
         });
-        resolve('Created database connection');
+
+        this.executeQuery('SELECT * FROM INFORMATION_SCHEMA.TABLES').then(r => {
+          resolve('Created database connection');
+        }).catch(e => {
+          reject('Database connection error: ' + e)
+        })
       } catch(e) {
         reject(e);
       }
@@ -53,10 +58,10 @@ class Database {
         });
         return result;
       } catch(e) {
-        return 'Database executeQuery() Error.';
+        throw Error(e)
       }
     } else { // db 커넥션 생성하지 않았을 경우(init 함수 미 호출)
-      return 'Database init() execute please.'
+      throw Error('Database init() execute please.')
     }
   }
 }

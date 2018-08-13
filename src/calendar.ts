@@ -42,7 +42,7 @@ class Calendar {
       this.check = true;
       return {'msg': 'Calendar data changed', 'err': false};
     } catch(e) {
-      return {'msg': 'Calendar data change error', 'err': true};
+      return {'msg': 'Calendar data change error: ' + e, 'err': true};
     }
   }
 
@@ -63,7 +63,7 @@ class Calendar {
         }
         return {'msg': str, 'reset': false};
       } catch(e) {
-        return {'msg': '데이터베이스 오류', 'reset': true};
+        return {'msg': '데이터베이스 오류: ' + e, 'reset': true};
       }
     } else {
       return {'msg': '일정 데이터를 불러오고 있습니다.\n잠시 후 다시 시도해주세요', 'reset': true};

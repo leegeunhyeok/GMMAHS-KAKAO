@@ -410,10 +410,14 @@ class App {
       this.statistics.addFirstData();
       this.port = port;
       this.logger(`Server initialization complated [Server port: ${this.port}]`, 1);
+      return {
+        err: false
+      }
     } catch(e) {
-      this.logger('Application initialization error', 4);
-    } finally {
-      return;
+      this.logger('Application initialization error: ' + e, 4);
+      return {
+        err: true
+      }
     }
   }
 
