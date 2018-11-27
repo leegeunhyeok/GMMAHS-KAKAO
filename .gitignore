@@ -1,9 +1,6 @@
 .DS_Store
 .vscode
 node_modules/
-key.js
-token.js
-admin.js
 *.js
 *.map
 

@@ -1,0 +1,15 @@
+{
+  "port": 8080,
+  "schoolCode": "J100000488",
+  "api_key": "",
+  "admin": {
+    "route": "/gmmahs/admin"
+  },
+  "database": {
+    "db": "gmmahs",
+    "user": "root",
+    "password": "1234",
+    "host": "localhost",
+    "port": 3306
+  }
+}

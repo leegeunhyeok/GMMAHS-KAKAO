@@ -24,7 +24,7 @@ import * as bodyParser from 'body-parser'; // HTML Body 데이터 읽기(POST)
 import * as cheerio from 'cheerio'; // HTML 파싱
 import * as schedule from 'node-schedule'; // 스케쥴러 
 import * as school from 'node-school-kr'; // 학교 급식, 학사일정 파싱
-import * as admin from '../admin/admin.js'; // 관리자 페이지 라우팅 경로
+//import * as admin from '../admin/admin.js'; // 관리자 페이지 라우팅 경로
 import Weather from '../src/weather.js'; // 날씨 RSS 파싱 모듈
 import Timetable from '../src/timetable.js'; // 시간표 파싱 모듈
 import Meal from '../src/meal.js'; // 급식 데이터 파싱 모듈
