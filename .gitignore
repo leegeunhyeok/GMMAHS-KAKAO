@@ -1,8 +1,6 @@
 .DS_Store
 .vscode
 node_modules/
-*.js
-*.map
 
 # Editor directories and files
 .idea
