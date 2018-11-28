@@ -38,3 +38,8 @@ const Timetable = sequelize.define('Timetable', {
 exports.init = () => {
   return Timetable.sync({ force: true })
 }
+
+
+exports.update = () => {
+  
+}

@@ -2,7 +2,7 @@ const schedule = require('node-schedule')
 
 const Calendar = require('../src/Calendar'),
       Meal = require('../src/Meal'),
-      // Timetable = require('../src/Timetable'),
+      Timetable = require('../src/Timetable'),
       Weather = require('../src/Weather')
 
 const { timeStamp } = require('../common/util')
@@ -31,5 +31,5 @@ exports.init = () => {
     await Weather.update()
   })
 
-  console.log((timeStamp() + 'Scheduler initialized'))
+  console.log((timeStamp() + 'Scheduler initialized').cyan)
 }
