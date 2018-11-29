@@ -177,7 +177,7 @@ Timetable.get = async function (grade, classNum, weekday) {
       let timetableResult = `${grade}학년 ${classNum}반 ${this._weekdayString[weekday]}요일 시간표\n\n`
       for (let row of rows) {
         let data = row.dataValues
-        timetableResult += `${data.classTime}교시: ${data.subject}(${data.teacher})\n`
+        timetableResult += `${data.class_time}교시: ${data.subject}(${data.teacher})\n`
       }
       return timetableResult.replace(/\n$/, '')
     }
