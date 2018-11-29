@@ -29,7 +29,7 @@ Bus._err = {
   '99': 'API 서버 준비 중입니다.'
 }
 
-Bus.init = () => {
+Bus.init = function () {
   this._key = config.get('api_key')
   console.log(timeStamp() + 'API Key loaded'.cyan)
 }
@@ -37,7 +37,6 @@ Bus.init = () => {
 Bus.getStation = function (keyword) {
   return new Promise((resolve, reject) => {
     const url = this._station + this._key + '&keyword=' + encodeURIComponent(keyword)
-
     request(url, (err, res, body) => {
       if (err) {
         reject(err)
@@ -169,7 +168,7 @@ Bus.process = data => {
   return resultString
 }
 
-Bus.search = async keyword => {
+Bus.search = async function (keyword) {
   try {
     let stations = await this.getStation(keyword)
     let buses = await this.getBus(stations)
@@ -177,7 +176,7 @@ Bus.search = async keyword => {
     return this.process(infos)
   } catch (e) {
     console.log(timeStamp() + e.message.red)
-    return '버스 정보를 불러오는 중 오류가 발생했습니다.'
+    return e.message
   }
 }
 
