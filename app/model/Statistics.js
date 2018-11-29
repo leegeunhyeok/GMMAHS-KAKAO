@@ -36,7 +36,6 @@ const Statistics = sequelize.define('Statistics', {
   freezeTableName: true
 })
 
-
 exports.init = async () => {
   await Statistics.sync({ force: true })
   await Statistics.create({
@@ -48,7 +47,6 @@ exports.init = async () => {
     other: 0
   })
 }
-
 
 exports.reset = async () => {
   await Statistics.destroy({
@@ -65,7 +63,6 @@ exports.reset = async () => {
   })
 }
 
-
 exports.count = type => {
   const option = {}
   option[type] = Sequelize.literal(`${type} + 1`)
@@ -74,7 +71,6 @@ exports.count = type => {
     truncate: true
   })
 }
-
 
 exports.get = () => {
   return Statistics.findOne()

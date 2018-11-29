@@ -1,5 +1,4 @@
 const { Sequelize, sequelize } = require('../bootstrap/database')
-const { timeStamp } = require('../common/util')
 
 // Meal 모델 정의
 const Meal = sequelize.define('Meal', {
@@ -15,16 +14,13 @@ const Meal = sequelize.define('Meal', {
   freezeTableName: true
 })
 
-
 exports.init = () => {
   return Meal.sync({ force: true })
 }
 
-
 exports.get = () => {
   return Meal.findOne()
 }
-
 
 exports.update = async (dateString, mealInfo) => {
   await Meal.destroy({

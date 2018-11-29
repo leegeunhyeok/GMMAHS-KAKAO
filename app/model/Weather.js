@@ -38,16 +38,13 @@ const Weather = sequelize.define('Weather', {
   freezeTableName: true
 })
 
-
 exports.init = () => {
   return Weather.sync({ force: true })
 }
 
-
 exports.get = () => {
   return Weather.findAll()
 }
-
 
 exports.update = async weatherInfo => {
   await Weather.destroy({

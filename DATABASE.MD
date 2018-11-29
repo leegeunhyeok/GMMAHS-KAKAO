@@ -1,4 +1,5 @@
 # 데이터베이스 메뉴얼
+* `(알림)` 2018-11-30 업데이트 이후 [ORM](https://github.com/sequelize/sequelize)을 사용하기 때문에 테이블을 생성하지 않아도 됨
 * 데이터베이스는 MySQL (MariaDB) 사용
 > ## 급식정보 테이블
 > * 테이블명 : meal

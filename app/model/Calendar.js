@@ -18,22 +18,20 @@ const Calendar = sequelize.define('Calendar', {
   freezeTableName: true
 })
 
-
 exports.init = () => {
   return Calendar.sync({ force: true })
 }
 
-
 exports.get = () => {
   return Calendar.findAll()
 }
-
 
 exports.update = async datas => {
   await Calendar.destroy({
     where: {},
     truncate: true
   })
+
   for (let day = 1; day <= 31; day++) {
     if (datas[day]) {
       await Calendar.create({

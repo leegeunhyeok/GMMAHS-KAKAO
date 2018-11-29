@@ -14,7 +14,7 @@ const Timetable = sequelize.define('Timetable', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
-  period: {
+  class_time: {
     type: Sequelize.INTEGER,
     allowNull: false
   },
@@ -23,23 +23,38 @@ const Timetable = sequelize.define('Timetable', {
     allowNull: false
   },
   teacher: {
-    type: Sequelize.toString(12),
+    type: Sequelize.STRING(12),
     allowNull: false
   },
   subject: {
-    type: Sequelize.toString(36),
+    type: Sequelize.STRING(36),
     allowNull: false
   }
 }, {
   freezeTableName: true
 })
 
-
 exports.init = () => {
   return Timetable.sync({ force: true })
 }
 
+exports.get = (grade, classNum, weekday) => {
+  return Timetable.findAll({
+    where: {
+      grade,
+      class: classNum,
+      weekday
+    }
+  })
+}
 
-exports.update = () => {
-  
+exports.update = async timetableData => {
+  await Timetable.destroy({
+    where: {},
+    truncate: true
+  })
+
+  for (let d of timetableData) {
+    await Timetable.create(d)
+  }
 }

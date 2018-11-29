@@ -1,14 +1,13 @@
 const schedule = require('node-schedule')
 
-const Calendar = require('../src/Calendar'),
-      Meal = require('../src/Meal'),
-      Timetable = require('../src/Timetable'),
-      Weather = require('../src/Weather')
+const Calendar = require('../src/Calendar')
+const Meal = require('../src/Meal')
+const Timetable = require('../src/Timetable')
+const Weather = require('../src/Weather')
 
 const { timeStamp } = require('../common/util')
 
 exports.init = () => {
-
   // 매일 00:00:01 급식데이터 및 이번달 일정 데이터 갱신
   schedule.scheduleJob('1 0 0 * * * *', async () => {
     await Meal.update()
@@ -16,8 +15,8 @@ exports.init = () => {
   })
 
   // 매주 토요일 00:00:00에 시간표 데이터 갱신
-  schedule.scheduleJob('0 0 0 * * * 7', () => {
-    // 시간표
+  schedule.scheduleJob('0 0 0 * * * 7', async () => {
+    await Timetable.update()
   })
 
   // 매일 14:00:00 급식데이터 갱신 (내일 급식으로)
@@ -31,5 +30,5 @@ exports.init = () => {
     await Weather.update()
   })
 
-  console.log((timeStamp() + 'Scheduler initialized').cyan)
+  console.log(timeStamp() + 'Scheduler initialized'.cyan)
 }

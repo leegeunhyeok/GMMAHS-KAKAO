@@ -1,6 +1,7 @@
-const config = require('config'),
-      request = require('request'),
-      cheerio = require('cheerio')
+const config = require('config')
+const request = require('request')
+const cheerio = require('cheerio')
+
 const { timeStamp } = require('../common/util')
 
 var Bus = {}
@@ -30,15 +31,14 @@ Bus._err = {
 
 Bus.init = () => {
   this._key = config.get('api_key')
-  console.log((timeStamp() + 'API Key loaded').cyan)
+  console.log(timeStamp() + 'API Key loaded'.cyan)
 }
-
 
 Bus.getStation = function (keyword) {
   return new Promise((resolve, reject) => {
     const url = this._station + this._key + '&keyword=' + encodeURIComponent(keyword)
-    
-    request (url, (err, res, body) => {
+
+    request(url, (err, res, body) => {
       if (err) {
         reject(err)
       }
@@ -47,25 +47,25 @@ Bus.getStation = function (keyword) {
       const $ = cheerio.load(body)
 
       if ($('resultCode').text() === '0') {
-
         $('busStationList').each(function () {
           const name = $(this).find('stationName').text()
           const id = $(this).find('stationId').text()
-          station.push({name, id})
+          station.push({ name, id })
         })
 
-        if(station.length > 6) {
-          reject('검색된 정류장이 너무 많습니다.\n더 자세한 키워드를 입력해주세요\n\n검색된 정류장 수: ' + station.length);
+        if (station.length > 6) {
+          reject(new Error('검색된 정류장이 너무 많습니다.\n' +
+                '더 자세한 키워드를 입력해주세요\n\n검색된 정류장 수: ' +
+                station.length))
         } else {
-          resolve(station);
+          resolve(station)
         }
       } else {
-        reject(this._err[parseInt($('resultCode').text())])
+        reject(new Error(this._err[parseInt($('resultCode').text())]))
       }
     })
   })
 }
-
 
 Bus.getBus = function (stationIds = []) {
   return new Promise((resolve, reject) => {
@@ -74,22 +74,21 @@ Bus.getBus = function (stationIds = []) {
 
     for (let station of stationIds) {
       works.push(new Promise((resolve, reject) => {
-        const url = baseUrl + station.id;
+        const url = baseUrl + station.id
 
         request(url, (err, res, body) => {
-          if(err) {
-            reject('정류장에 도착할 버스를 조회하는 도중 오류가 발생하였습니다.');
+          if (err) {
+            reject(new Error('정류장에 도착할 버스를 조회하는 도중 오류가 발생하였습니다.'))
           }
 
-          // 버스 데이터 저장 배열 
+          // 버스 데이터 저장 배열
           const bus = []
           const $ = cheerio.load(body)
           if ($('resultCode').text() === '0') {
-
             $('busArrivalList').each(function () {
-              const route = $(this).find('routeId').text(); // 노선 ID
-              const predictTime1 = $(this).find('predictTime1').text(); // 첫 번째 버스 도착시간
-              const predictTime2 = $(this).find('predictTIme2').text(); // 두 번째 버스 도착시간
+              const route = $(this).find('routeId').text() // 노선 ID
+              const predictTime1 = $(this).find('predictTime1').text() // 첫 번째 버스 도착시간
+              const predictTime2 = $(this).find('predictTIme2').text() // 두 번째 버스 도착시간
               bus.push({
                 id: route,
                 station: station.name,
@@ -100,7 +99,7 @@ Bus.getBus = function (stationIds = []) {
 
             resolve(bus)
           } else {
-            reject(this._err[parseInt($('resultCode').text())])
+            reject(new Error(this._err[parseInt($('resultCode').text())]))
           }
         })
       }))
@@ -109,14 +108,12 @@ Bus.getBus = function (stationIds = []) {
     Promise.all(works).then(result => {
       resolve(result)
     }).catch(e => {
-      console.log((timeStamp() + e).red)
       reject(e)
     })
   })
 }
 
-
-exports.getBusInfo = buses => {
+exports.getBusInfo = bus => {
   return new Promise((resolve, reject) => {
     const baseUrl = this._info + this._key + '&routeId='
     const works = []
@@ -129,14 +126,14 @@ exports.getBusInfo = buses => {
 
           request(url, (err, res, body) => {
             if (err) {
-              reject('버스 상세정보를 불러오던 중 오류가 발생했습니다.')
+              reject(new Error('버스 상세정보를 불러오던 중 오류가 발생했습니다.'))
             }
             const bus = []
             const $ = cheerio.load(body)
             if ($('resultCode').text() === '0') {
-              $('busRouteInfoItem').each(function(idx) {
-                const end = $(this).find('endStationName').text(); // 종점 
-                const number = $(this).find('routeName').text(); // 버스 번호 
+              $('busRouteInfoItem').each(function () {
+                const end = $(this).find('endStationName').text() // 종점
+                const number = $(this).find('routeName').text() // 버스 번호
                 bus.push({
                   number: number,
                   end: end,
@@ -147,36 +144,40 @@ exports.getBusInfo = buses => {
               })
               resolve(bus)
             } else {
-              reject(this._err[parseInt($('resultCode').text())])
+              reject(new Error(this._err[parseInt($('resultCode').text())]))
             }
           })
         }))
       }
     }
+
+    Promise.all(works).then(busList => {
+      resolve(busList)
+    }).catch(e => {
+      reject(e)
+    })
   })
 }
-
 
 Bus.process = data => {
   let resultString = ''
   for (let bus of data) {
     if (bus.time1) {
-      resultString += `[${bus.number}번 버스]\n${bus.station} 정류장에\n${bus.time1}분 후 도착합니다.\n다음 버스는 ${bus.time2 ? bus.time2 + '분 후 도착합니다.' : '없습니다'}\n\n\n`;
+      resultString += `[${bus.number}번 버스]\n${bus.station} 정류장에\n${bus.time1}분 후 도착합니다.\n다음 버스는 ${bus.time2 ? bus.time2 + '분 후 도착합니다.' : '없습니다'}\n\n\n`
     }
   }
-  return resultString;
+  return resultString
 }
-
 
 Bus.search = async keyword => {
   try {
-    let stations = await this.getStation(keyword);
-    let buses = await this.getBus(stations);
-    let infos = await this.getBusInfo(buses);
-    return this.process(infos);
+    let stations = await this.getStation(keyword)
+    let buses = await this.getBus(stations)
+    let infos = await this.getBusInfo(buses)
+    return this.process(infos)
   } catch (e) {
-    console.log((timeStamp() + e).red)
-    return '버스 정보를 불러오는 중 오류가 발생했습니다.';
+    console.log(timeStamp() + e.message.red)
+    return '버스 정보를 불러오는 중 오류가 발생했습니다.'
   }
 }
 

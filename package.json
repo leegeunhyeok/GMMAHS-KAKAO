@@ -1,10 +1,11 @@
 {
   "name": "gmmahs_kakao",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "gmma.hs.kr KAKAO",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "standard && node my-tests.js",
+    "fix": "standard --fix"
   },
   "bugs": {
     "url": "https://github.com/leegeunhyeok/GMMAHS-KAKAO/issues"
@@ -35,6 +36,6 @@
     "sequelize": "^4.41.2"
   },
   "devDependencies": {
-    "@types/express": "^4.11.1"
+    "standard": "^12.0.1"
   }
 }

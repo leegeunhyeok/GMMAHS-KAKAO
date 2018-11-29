@@ -1,5 +1,6 @@
-const request = require('request'),
-      cheerio = require('cheerio')
+const request = require('request')
+const cheerio = require('cheerio')
+
 const { timeStamp } = require('../common/util')
 const WeatherModel = require('../model/Weather')
 
@@ -10,9 +11,8 @@ Weather._pty = ['없음', '비', '비와 눈', '눈']
 
 Weather.init = async function () {
   await WeatherModel.init()
-  console.log((timeStamp() + 'Weather model defined').cyan)
+  console.log(timeStamp() + 'Weather model defined'.cyan)
 }
-
 
 Weather.update = async function () {
   const result = await new Promise((resolve, reject) => {
@@ -30,7 +30,7 @@ Weather.update = async function () {
         let data = $(`data:nth-child(${i})`)
         obj['index'] = i - 2
         obj['hour'] = data.find('hour').text() // 시간
-        obj['temp'] = data.find('temp').text() // 기온 
+        obj['temp'] = data.find('temp').text() // 기온
         obj['pty'] = data.find('pty').text() // 강수형태(0: 없음, 1: 비, 2: 비/눈, 3: 눈)
         obj['pop'] = data.find('pop').text() // 강수확률
         obj['wfKor'] = data.find('wfKor').text() // 하늘 상태(맑음..등)
@@ -42,8 +42,8 @@ Weather.update = async function () {
     })
   })
   await WeatherModel.update(result)
+  console.log(timeStamp() + 'Weather data updated'.green)
 }
-
 
 Weather.get = async function () {
   try {
@@ -52,11 +52,11 @@ Weather.get = async function () {
       let resultString = ''
       const pub = rows[0].pub
       rows.forEach(row => {
-        resultString += `[${row.hour > 12 ? '오후':'오전'}` +
+        resultString += `[${row.hour > 12 ? '오후' : '오전'}` +
                         ` ${row.hour > 12 ? row.hour - 12 : row.hour}시]\n` +
                         `- 기온: ${row.temp}℃\n` +
-                        `- 강수형태: ${this._pty[row.pty]}\n` + 
-                        `- 강수확률: ${row.pop}%, ${row.wfKor}\n` + 
+                        `- 강수형태: ${this._pty[row.pty]}\n` +
+                        `- 강수확률: ${row.pop}%, ${row.wfKor}\n` +
                         `- 습도: ${row.reh}%\n\n`
       })
       return resultString + pub + ' 발표\n소하 2동 날씨 기준'
@@ -64,7 +64,7 @@ Weather.get = async function () {
       return '날씨 데이터가 없습니다.'
     }
   } catch (e) {
-    console.log((timeStamp() + e).red)
+    console.log(timeStamp() + e.message.red)
     return '날씨 데이터를 불러오는 중 오류가 발생했습니다.'
   }
 }

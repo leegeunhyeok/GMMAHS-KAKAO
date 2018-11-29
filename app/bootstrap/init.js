@@ -1,40 +1,34 @@
-const config = require('config'),
-      cookieParser = require('cookie-parser'),
-      bodyParser = require('body-parser')
+const config = require('config')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
 
-const bus = require('../src/Bus'),
-      calendar = require('../src/Calendar'),
-      meal = require('../src/Meal'),
-      statistics = require('../src/Statistics'),
-      weather = require('../src/Weather')
-
+const bus = require('../src/Bus')
+const calendar = require('../src/Calendar')
+const meal = require('../src/Meal')
+const statistics = require('../src/Statistics')
+const timetable = require('../src/Timetable')
+const weather = require('../src/Weather')
 
 const { timeStamp } = require('../common/util')
 const school = require('./school').school
 
 module.exports = async app => {
-  console.log((timeStamp() + 'Server initializing').cyan)
+  const startTime = new Date()
+  console.log(timeStamp() + 'Server initializing..')
 
   await require('./database').init()
-  
+
   await bus.init()
   await calendar.init(school)
   await meal.init(school)
   await statistics.init()
+  await timetable.init('광명경영회계고등학교')
   await weather.init()
 
-  /* 테스트 */
   await calendar.update()
-  console.log(await calendar.get())
-
+  await meal.update()
+  await timetable.update()
   await weather.update()
-  console.log(await weather.get())
-
-  await statistics.count('MEAL')
-  await statistics.count('MEAL')
-  await statistics.count('MEAL')
-  console.log(await statistics.get())
-  /*-------*/
 
   await require('./scheduler').init()
 
@@ -43,5 +37,10 @@ module.exports = async app => {
 
   // 미들웨어 사용
   app.use(cookieParser())
-  app.use(bodyParser.urlencoded({ extended: true }))
+  app.use(bodyParser.urlencoded({ extended: false }))
+  app.use(bodyParser.json())
+
+  require('../message/message')(app)
+
+  console.log(timeStamp() + 'Initialization complete! ' + (new Date() - startTime + 'ms').yellow)
 }
