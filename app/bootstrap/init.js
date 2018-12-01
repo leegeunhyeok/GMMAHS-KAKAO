@@ -1,6 +1,8 @@
 const config = require('config')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
+const session = require('express-session')
+const passport = require('passport')
 
 const admin = require('../src/Admin')
 const bus = require('../src/Bus')
@@ -12,6 +14,12 @@ const weather = require('../src/Weather')
 
 const { timeStamp } = require('../common/util')
 const school = require('./school').school
+
+const sessionOption = {
+  secret: 'test_key',
+  resave: true,
+  saveUninitialized: true
+}
 
 module.exports = async app => {
   const startTime = new Date()
@@ -41,6 +49,10 @@ module.exports = async app => {
   app.use(cookieParser())
   app.use(bodyParser.urlencoded({ extended: false }))
   app.use(bodyParser.json())
+  app.use(session(sessionOption))
+
+  app.use(passport.initialize())
+  app.use(passport.session())
 
   require('../message/message')(app)
   require('../route/admin')(app)

@@ -24,7 +24,7 @@ const Admin = sequelize.define('Admin', {
     type: Sequelize.STRING
   },
   salt: {
-    type: Sequelize.STRING,
+    type: Sequelize.STRING
   }
 }, {
   freezeTableName: true,
@@ -36,7 +36,8 @@ const Admin = sequelize.define('Admin', {
 
 exports.init = async () => {
   Admin.prototype.validPassword = async function (password) {
-    return await bcrypt.compare(password, this.password)
+    const valid = await bcrypt.compare(password, this.password)
+    return valid
   }
   await Admin.sync({ force: true })
   await Admin.create({
@@ -52,8 +53,7 @@ exports.auth = user => {
         id: user.id
       }
     }).then(async admin => {
-      const valid = await admin.validPassword(user.password)
-      if (valid) {
+      if (await admin.validPassword(user.password)) {
         resolve(true)
       } else {
         resolve(false)

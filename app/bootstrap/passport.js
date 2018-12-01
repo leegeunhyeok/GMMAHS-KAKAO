@@ -2,26 +2,23 @@ const passport = require('passport')
 const { Strategy } = require('passport-local')
 const { timeStamp } = require('../common/util')
 
-const User = require('../model/user')
+const Admin = require('../src/Admin')
 
 // Passport 전략 정의
 passport.use(new Strategy(
   {
-    usernameField : 'id',
-    passwordField : 'password',
+    usernameField: 'id',
+    passwordField: 'password',
     session: true
   },
-  (id, password, done) => {
-    const data = { id, password }
-    console.log(timeStamp(), '-', 'Authenticate data:', data)
-    
-    // 유저 인증
-    User.auth(data).then(user => {
+  async (id, password, done) => {
+    const user = { id, password }
+
+    if (await Admin.auth(user)) {
       done(null, user)
-    }).catch(e => {
-      console.log(timeStamp(), '-', e.red)
+    } else {
       done(null, false)
-    })
+    }
   }
 ))
 
@@ -35,15 +32,26 @@ passport.deserializeUser((user, done) => {
   done(null, user)
 })
 
+// 로그인 진행
+exports.login = (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err || !user) {
+      return res.json({ login: false })
+    }
+
+    req.logIn(user, err => {
+      if (err) {
+        return res.json({ login: false })
+      }
+      return res.json({ login: true })
+    })
+  })(req, res, next)
+}
+
 // 인증 상태 확인
-exports.auth = (req, res, next) => {
+exports.authenticate = (req, res) => {
   console.log(timeStamp(), '-', 'Authenticated:', req.isAuthenticated() ? 'true'.green : 'false'.red)
-
-  if (req.isAuthenticated()) {
-    return next()
-  }
-
-  res.json({ auth: false })
+  res.json({ auth: req.isAuthenticated() })
 }
 
 exports.passport = passport

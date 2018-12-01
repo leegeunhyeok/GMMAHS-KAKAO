@@ -1,6 +1,3 @@
-const request = require('request')
-const cheerio = require('cheerio')
-
 const { timeStamp } = require('../common/util')
 const AdminModel = require('../model/Admin')
 
@@ -12,7 +9,12 @@ Admin.init = async () => {
 }
 
 Admin.auth = async (user) => {
-  return await AdminModel.auth(user)
+  try {
+    return await AdminModel.auth(user)
+  } catch (e) {
+    console.log(timeStamp() + e.message.red)
+    return false
+  }
 }
 
 Admin.create = async (user) => {
