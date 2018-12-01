@@ -87,12 +87,16 @@ Bus.getBus = function (stationIds = []) {
             $('busArrivalList').each(function () {
               const route = $(this).find('routeId').text() // 노선 ID
               const predictTime1 = $(this).find('predictTime1').text() // 첫 번째 버스 도착시간
+              const locationNo1 = $(this).find('LocationNo1').text() // 첫 번째 버스 몇 정류장 전
               const predictTime2 = $(this).find('predictTIme2').text() // 두 번째 버스 도착시간
+              const locationNo2 = $(this).find('LocationNo2').text() // 두 번째 버스 몇 정류장 전
               bus.push({
                 id: route,
                 station: station.name,
                 time1: predictTime1,
-                time2: predictTime2
+                time2: predictTime2,
+                loc1: locationNo1,
+                loc2: locationNo2
               })
             })
 
@@ -112,7 +116,7 @@ Bus.getBus = function (stationIds = []) {
   })
 }
 
-exports.getBusInfo = bus => {
+Bus.getBusInfo = function (bus) {
   return new Promise((resolve, reject) => {
     const baseUrl = this._info + this._key + '&routeId='
     const works = []
@@ -131,14 +135,14 @@ exports.getBusInfo = bus => {
             const $ = cheerio.load(body)
             if ($('resultCode').text() === '0') {
               $('busRouteInfoItem').each(function () {
-                const end = $(this).find('endStationName').text() // 종점
                 const number = $(this).find('routeName').text() // 버스 번호
                 bus.push({
                   number: number,
-                  end: end,
                   station: tempBus.station,
                   time1: tempBus.time1,
-                  time2: tempBus.time
+                  time2: tempBus.time2,
+                  loc1: tempBus.loc1,
+                  loc2: tempBus.loc2
                 })
               })
               resolve(bus)
@@ -161,8 +165,11 @@ exports.getBusInfo = bus => {
 Bus.process = data => {
   let resultString = ''
   for (let bus of data) {
-    if (bus.time1) {
-      resultString += `[${bus.number}번 버스]\n${bus.station} 정류장에\n${bus.time1}분 후 도착합니다.\n다음 버스는 ${bus.time2 ? bus.time2 + '분 후 도착합니다.' : '없습니다'}\n\n\n`
+    let targetBus = bus[0]
+    if (targetBus.time1) {
+      resultString += `[${targetBus.number}번 버스]\n${targetBus.station} 정류장 도착 정보\n` +
+      `이번 버스: ${targetBus.time1}분 (${targetBus.loc1} 정류장 전)\n` +
+      `다음 버스: ${targetBus.time2 ? targetBus.time2 + `분 (${targetBus.loc2} 정류장 전)` : '정보 없음'}\n\n`
     }
   }
   return resultString
