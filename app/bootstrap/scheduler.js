@@ -14,11 +14,6 @@ exports.init = () => {
     await Calendar.update()
   })
 
-  // 매주 토요일 00:00:00에 시간표 데이터 갱신
-  schedule.scheduleJob('0 0 0 * * * 7', async () => {
-    await Timetable.update()
-  })
-
   // 매일 14:00:00 급식데이터 갱신 (내일 급식으로)
   // 점심시간이 지난 후 (2시에 내일 급식으로 갱신)
   schedule.scheduleJob('0 0 14 * * * *', async () => {
