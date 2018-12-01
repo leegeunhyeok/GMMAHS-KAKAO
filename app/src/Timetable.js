@@ -92,11 +92,11 @@ Timetable.update = async function () {
             let teacherFinished = false
             let timetableDataFinished = false
             for (let d of result[k]) {
-              if (d.indexOf('*') !== -1 && d.length >= 2) {
+              if ((d.indexOf('김') !== -1 || d.indexOf('박') !== -1 || d.indexOf('이') !== -1 || d.indexOf('송') !== -1)) {
                 teacherCount++
               }
 
-              if (teacherCount >= 3 && !teacherFinished) {
+              if (teacherCount >= 10 && !teacherFinished) {
                 teacherProp = k
                 teacherFinished = true
               }
@@ -166,6 +166,7 @@ Timetable.update = async function () {
     await TimetableModel.update(insertData)
     console.log(timeStamp() + 'Timetable data updated'.green)
   } catch (e) {
+    console.log(e)
     console.log(timeStamp() + e.message.red)
   }
 }
