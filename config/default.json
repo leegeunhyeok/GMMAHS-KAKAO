@@ -3,7 +3,9 @@
   "schoolCode": "J100000488",
   "api_key": "",
   "admin": {
-    "route": "/gmmahs/admin"
+    "id": "admin",
+    "password": "admin",
+    "route": "/admin"
   },
   "database": {
     "db": "gmmahs",

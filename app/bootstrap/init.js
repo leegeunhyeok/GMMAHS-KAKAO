@@ -2,6 +2,7 @@ const config = require('config')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 
+const admin = require('../src/Admin')
 const bus = require('../src/Bus')
 const calendar = require('../src/Calendar')
 const meal = require('../src/Meal')
@@ -18,6 +19,7 @@ module.exports = async app => {
 
   await require('./database').init()
 
+  await admin.init()
   await bus.init()
   await calendar.init(school)
   await meal.init(school)
@@ -41,6 +43,7 @@ module.exports = async app => {
   app.use(bodyParser.json())
 
   require('../message/message')(app)
+  require('../route/admin')(app)
 
   console.log(timeStamp() + 'Initialization complete! ' + (new Date() - startTime + 'ms').yellow)
 }
