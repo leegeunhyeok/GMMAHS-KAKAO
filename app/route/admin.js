@@ -26,7 +26,7 @@ module.exports = app => {
   app.post('/logout', passport.logout)
 
   app.get('/chart', passport.auth, async (req, res) => {
-    res.json(await Statistics.get())
+    res.json(await Statistics.getData())
   })
 
   console.log(timeStamp() + 'Admin route initialized'.cyan)
