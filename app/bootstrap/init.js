@@ -12,6 +12,8 @@ const statistics = require('../src/Statistics')
 const timetable = require('../src/Timetable')
 const weather = require('../src/Weather')
 
+const messageInit = require('../message/message')
+
 const { timeStamp } = require('../common/util')
 const school = require('./school').school
 
@@ -21,7 +23,7 @@ const sessionOption = {
   saveUninitialized: true
 }
 
-module.exports = async app => {
+module.exports = async (app, express) => {
   const startTime = new Date()
   console.log(timeStamp() + 'Server initializing..')
 
@@ -46,6 +48,8 @@ module.exports = async app => {
   app.set('port', config.has('port') ? config.get('port') : 8080)
 
   // 미들웨어 사용
+  app.use('/', express.static('public'))
+
   app.use(cookieParser())
   app.use(bodyParser.urlencoded({ extended: false }))
   app.use(bodyParser.json())
@@ -54,7 +58,7 @@ module.exports = async app => {
   app.use(passport.initialize())
   app.use(passport.session())
 
-  require('../message/message')(app)
+  await messageInit(app)
   require('../route/admin')(app)
 
   console.log(timeStamp() + 'Initialization complete! ' + (new Date() - startTime + 'ms').yellow)

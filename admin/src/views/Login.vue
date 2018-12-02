@@ -7,10 +7,10 @@
     <div class="input-area">
       <form @submit.prevent="login">
         <div>
-          <input type="text" placeholder="Your ID">
+          <input type="text" name="id" placeholder="Your ID" v-model="id" required>
         </div>
         <div>
-          <input type="password" placeholder="Password">
+          <input type="password" name="password" placeholder="Password" v-model="password" required>
         </div>
         <div>
           <button class="button">Login</button>
@@ -33,7 +33,7 @@ export default {
   },
   created () {
     this.$http.post('/auth').then(r => {
-      if (r.auth) {
+      if (r.data.auth) {
         this.$router.push({ name: 'home' })
       }
     }).catch(e => {
@@ -47,7 +47,7 @@ export default {
         id: this.id,
         password: this.password
       }).then(r => {
-        if (r.login) {
+        if (r.data.login) {
           this.$router.push({ name: 'home' })
         } else {
           this.setMessage('Check your ID or PASSWORD')

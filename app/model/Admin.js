@@ -1,5 +1,4 @@
 const bcrypt = require('bcrypt')
-const config = require('config')
 
 const { Sequelize, sequelize } = require('../bootstrap/database')
 
@@ -34,16 +33,13 @@ const Admin = sequelize.define('Admin', {
   }
 })
 
-exports.init = async () => {
+exports.init = async (id, password) => {
   Admin.prototype.validPassword = async function (password) {
     const valid = await bcrypt.compare(password, this.password)
     return valid
   }
   await Admin.sync({ force: true })
-  await Admin.create({
-    id: config.get('admin.id'),
-    password: config.get('admin.password')
-  })
+  await Admin.create({ id, password })
 }
 
 exports.auth = user => {
@@ -53,7 +49,9 @@ exports.auth = user => {
         id: user.id
       }
     }).then(async admin => {
-      if (await admin.validPassword(user.password)) {
+      if (!admin) {
+        resolve(false)
+      } else if (await admin.validPassword(user.password)) {
         resolve(true)
       } else {
         resolve(false)

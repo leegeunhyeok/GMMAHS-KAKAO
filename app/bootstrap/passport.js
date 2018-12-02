@@ -11,14 +11,15 @@ passport.use(new Strategy(
     passwordField: 'password',
     session: true
   },
-  async (id, password, done) => {
+  (id, password, done) => {
     const user = { id, password }
-
-    if (await Admin.auth(user)) {
-      done(null, user)
-    } else {
-      done(null, false)
-    }
+    Admin.auth(user).then(auth => {
+      if (auth) {
+        done(null, user)
+      } else {
+        done(null, false)
+      }
+    })
   }
 ))
 
@@ -48,9 +49,15 @@ exports.login = (req, res, next) => {
   })(req, res, next)
 }
 
+// 로그아웃
+exports.logout = (req, res) => {
+  req.logout()
+  res.redirect('/admin')
+}
+
 // 인증 상태 확인
 exports.authenticate = (req, res) => {
-  console.log(timeStamp(), '-', 'Authenticated:', req.isAuthenticated() ? 'true'.green : 'false'.red)
+  console.log(timeStamp() + 'Authenticated: ' + (req.isAuthenticated() ? 'true'.green : 'false'.red))
   res.json({ auth: req.isAuthenticated() })
 }
 

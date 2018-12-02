@@ -4,8 +4,7 @@
   "api_key": "",
   "admin": {
     "id": "admin",
-    "password": "admin",
-    "route": "/admin"
+    "password": "admin"
   },
   "database": {
     "db": "gmmahs",

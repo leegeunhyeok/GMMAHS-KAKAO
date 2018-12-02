@@ -1,11 +1,16 @@
+const config = require('config')
+
 const { timeStamp } = require('../common/util')
 const AdminModel = require('../model/Admin')
 
 var Admin = {}
 
 Admin.init = async () => {
-  await AdminModel.init()
+  const id = config.get('admin.id')
+  const password = config.get('admin.password')
+  await AdminModel.init(id, password)
   console.log(timeStamp() + 'Admin model defined'.cyan)
+  console.log(timeStamp() + 'Initial admin account created '.cyan + `${id}/${password}`.blue)
 }
 
 Admin.auth = async (user) => {

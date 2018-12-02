@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <router-view/>
+    <transition name="fade" mode="out-in">
+      <router-view/>
+    </transition>
   </div>
 </template>
 
@@ -68,5 +70,13 @@ html, body {
 
 ::-ms-input-placeholder {
   color: rgba(255, 255, 255, 0.6);
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .3s ease;
+}
+
+.fade-enter, .fade-leave-to  {
+  opacity: 0;
 }
 </style>

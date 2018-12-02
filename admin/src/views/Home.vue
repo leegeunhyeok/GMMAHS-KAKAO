@@ -9,7 +9,7 @@ export default {
   name: 'home',
   created () {
     this.$http.post('/auth').then(r => {
-      if (!r.auth) {
+      if (!r.data.auth) {
         this.$router.push({ name: 'login' })
       }
     }).catch(e => {
