@@ -9,6 +9,10 @@ export default new Router({
   mode: 'history',
   routes: [
     {
+      path: '/',
+      redirect: '/admin'
+    },
+    {
       path: '/admin',
       name: 'home',
       component: Home

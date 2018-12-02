@@ -1,3 +1,4 @@
+const config = require('config')
 const publicIp = require('public-ip')
 
 const bus = require('../src/Bus')
@@ -24,6 +25,8 @@ const week = ['일', '월', '화', '수', '목', '금', '토']
 module.exports = async app => {
   try {
     const ip = await publicIp.v4()
+    const port = config.get('port')
+
     app.get('/keyboard', (req, res) => {
       res.json({
         type: 'buttons',
@@ -164,7 +167,7 @@ module.exports = async app => {
             text: '관리자 페이지입니다',
             message_button: {
               label: 'Admin',
-              url: `http://${ip}/admin`
+              url: `http://${ip}:${port}/admin`
             }
           },
           keyboard: {

@@ -1,6 +1,8 @@
 const fs = require('fs')
 const passport = require('../bootstrap/passport')
 
+const Statistics = require('../src/Statistics')
+
 const { timeStamp } = require('../common/util')
 
 module.exports = app => {
@@ -22,6 +24,10 @@ module.exports = app => {
   app.post('/auth', passport.authenticate)
   app.post('/login', passport.login)
   app.post('/logout', passport.logout)
+
+  app.get('/chart', passport.auth, async (req, res) => {
+    res.json(await Statistics.get())
+  })
 
   console.log(timeStamp() + 'Admin route initialized'.cyan)
 }
