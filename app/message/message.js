@@ -1,11 +1,11 @@
 const publicIp = require('public-ip')
 
 const bus = require('../src/Bus')
-const calendar = require('../src/Calendar')
-const meal = require('../src/Meal')
-const statistics = require('../src/Statistics')
-const timetable = require('../src/Timetable')
-const weather = require('../src/Weather')
+const calendar = require('../controller/Calendar')
+const meal = require('../controller/Meal')
+const statistics = require('../controller/Statistics')
+const timetable = require('../controller/Timetable')
+const weather = require('../controller/Weather')
 
 const { timeStamp } = require('../common/util')
 

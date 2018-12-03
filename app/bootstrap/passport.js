@@ -2,7 +2,7 @@ const passport = require('passport')
 const { Strategy } = require('passport-local')
 const { timeStamp } = require('../common/util')
 
-const Admin = require('../src/Admin')
+const Admin = require('../controller/Admin')
 
 // Passport 전략 정의
 passport.use(new Strategy(
