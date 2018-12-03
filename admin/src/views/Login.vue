@@ -4,19 +4,17 @@
       <img src="@/assets/user.png">
       <div id="message">{{ message }}</div>
     </div>
-    <div class="input-area">
-      <form @submit.prevent="login">
-        <div>
-          <input type="text" name="id" placeholder="Your ID" v-model="id" required>
-        </div>
-        <div>
-          <input type="password" name="password" placeholder="Password" v-model="password" required>
-        </div>
-        <div>
-          <button class="button">Login</button>
-        </div>
-      </form>
-    </div>
+    <form @submit.prevent="login">
+      <div class="input-area">
+        <input type="text" name="id" placeholder="Your ID" v-model="id" required>
+      </div>
+      <div class="input-area">
+        <input type="password" name="password" placeholder="Password" v-model="password" required>
+      </div>
+      <div>
+        <button class="button">Login</button>
+      </div>
+    </form>
   </div>
 </template>
 

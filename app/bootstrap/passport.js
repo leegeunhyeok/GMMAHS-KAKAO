@@ -61,4 +61,13 @@ exports.authenticate = (req, res) => {
   res.json({ auth: req.isAuthenticated() })
 }
 
+exports.auth = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next()
+  }
+  res.writeHead(401, { 'Content-Type': 'text/html' })
+  res.write('Login please')
+  res.end()
+}
+
 exports.passport = passport

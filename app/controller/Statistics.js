@@ -59,4 +59,23 @@ Statistics.get = async function () {
   }
 }
 
+Statistics.getData = async function () {
+  try {
+    const stat = await StatisticsModel.get()
+    if (stat) {
+      const data = []
+      data.push(stat['meal'])
+      data.push(stat['timetable'])
+      data.push(stat['calendar'])
+      data.push(stat['weather'])
+      data.push(stat['bus'])
+      data.push(stat['other'])
+      return data
+    }
+  } catch (e) {
+    console.log(timeStamp() + e.message.red)
+    return [1, 1, 1, 1, 1, 1]
+  }
+}
+
 module.exports = Statistics
