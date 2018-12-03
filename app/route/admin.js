@@ -1,7 +1,7 @@
 const fs = require('fs')
 const passport = require('../bootstrap/passport')
 
-const Statistics = require('../src/Statistics')
+const Statistics = require('../controller/Statistics')
 
 const { timeStamp } = require('../common/util')
 

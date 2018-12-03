@@ -26,9 +26,9 @@ require('./app/bootstrap/init')(app, express).then(() => {
     console.log(timeStamp() + colors.rainbow('GMMAHS KAKAO server started, port: ' + app.get('port')))
   })
 }).catch(e => {
-  console.log(timeStamp() + 'ERROR: ' + e.message.red)
+  console.log(timeStamp() + 'Server initialization error: ' + e.message.red)
 })
 
 process.on('uncaughtException', e => {
-  console.log(timeStamp() + ('Critical error: ' + e.message).red)
+  console.log(timeStamp() + ('UncaughtException: ' + e.message).red)
 })
