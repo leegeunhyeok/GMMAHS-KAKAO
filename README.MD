@@ -1,3 +1,7 @@
+# 안내
+현재 본 챗봇은 `카카오 i 오픈빌더` 버전으로 변경되었습니다.  
+👉 변경된 저장소로 [이동하기](https://github.com/leegeunhyeok/GMMAHS-KAKAO-i)
+
 <div align="center">
   
   ![](./kakao.png)
