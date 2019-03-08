@@ -4,7 +4,7 @@
 
 <div align="center">
   
-  ![](./kakao.png)
+  ![](https://user-images.githubusercontent.com/26512984/54033405-9429b680-41f7-11e9-9218-8dd93192fa62.png)
   
   [광명경영회계고등학교 플러스친구](http://pf.kakao.com/_DWMsC)
 
